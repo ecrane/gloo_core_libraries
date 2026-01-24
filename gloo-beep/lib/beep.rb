@@ -27,6 +27,11 @@ class Beep < Gloo::Core::Verb
   # engine stop gracefully next time through the loop.
   #
   def run
+    begin
+      @engine.heap.it.set_to 'beep'
+    rescue => e
+      puts "Error setting heap variable: #{e.message}"
+    end
     print 7.chr
   end
 

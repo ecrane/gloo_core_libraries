@@ -3,7 +3,6 @@
 # 
 # This file is loaded when someone does `require 'gloo-beep'`
 # 
-require 'gloo_beep'
 require 'beep'
 
 # 
@@ -16,7 +15,6 @@ class BeepInit < Gloo::Plugin::Base
     # 
     def register( callback )
       callback.register_verb( Beep )
-      puts "Beep library loaded!!!"
     end
 
 end

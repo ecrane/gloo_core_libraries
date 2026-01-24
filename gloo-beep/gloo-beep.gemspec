@@ -17,11 +17,8 @@ Gem::Specification.new do |spec|
 
   spec.files = [
     "lib/gloo-beep.rb",
-    "lib/gloo_beep.rb",
     "lib/beep.rb"
   ]
 
-  # spec.bindir        = 'exe'
-  # spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ['lib']
 end
