@@ -3,7 +3,7 @@
 # 
 # This file is loaded when someone does `require 'gloo-sqlite'`
 # 
-require 'sqlite3'
+require 'sqlite'
 
 # 
 # Registers the extension.

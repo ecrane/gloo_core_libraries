@@ -129,7 +129,7 @@ class Sqlite < Gloo::Core::Obj
       rows << row
     end
 
-    return QueryResult.new( result.columns, rows )
+    return Gloo::Objs::QueryResult.new( result.columns, rows )
   end
 
 
