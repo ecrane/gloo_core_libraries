@@ -17,4 +17,16 @@ class SqliteInit < Gloo::Plugin::Base
       callback.register_obj( Sqlite )
     end
 
+    #
+    # Load the version from the VERSION file.
+    #
+    def self.get_version
+      f = File.dirname( File.absolute_path( __FILE__ ) )
+      f = File.dirname( File.dirname( f ) )
+      f = File.join( f, VERSION_FILE )
+      return File.read( f )
+    end
+
+    VERSION = SqliteInit.get_version
+
 end

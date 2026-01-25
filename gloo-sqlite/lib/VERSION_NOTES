@@ -1,0 +1,9 @@
+1.2 - 2026.01.25
+ - Adds version notes and version helper.
+
+1.1 - 2026.01.24
+ - Fixed issue with loading sqlite3 gem
+
+1.0 - 2026.01.24
+ - Initial release
+
