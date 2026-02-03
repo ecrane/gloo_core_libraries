@@ -1,0 +1,96 @@
+#
+# The Postgres Object Type page.
+#
+
+page [can] :
+  objs [can] :
+    data [can] :
+      pg [page] :
+
+        head [e] :
+          content [can] :
+            title [e] : Postgres Object Type
+
+        body [text] : BEGIN
+
+<%= title "Postgres Object Type" %>
+<%= name_short "postgres", "pg" %>
+
+
+<h3 class="mt-5"> DESCRIPTION </h3>
+<p>
+  A Postgres database connection.
+</p>
+
+
+<h3 class="mt-5"> CHILDREN </h3>
+<ul>
+  <li> host </li>
+  <ul>
+    <li> <%= link 'string', '/objs/basic/string' %> </li>
+    <li> The database server host. </li>
+  </ul>
+
+  <li> database </li>
+  <ul>
+    <li> <%= link 'string', '/objs/basic/string' %> </li>
+    <li> The name of the database. </li>
+  </ul>
+
+  <li> username </li>
+  <ul>
+    <li> <%= link 'string', '/objs/basic/string' %> </li>
+    <li> The username with which to connect. </li>
+  </ul>
+
+  <li> pasword </li>
+  <ul>
+    <li> <%= link 'string', '/objs/basic/string' %> </li>
+    <li> The user's password. </li>
+  </ul>
+
+</ul>
+
+<p>
+  Note that for a local connection with integrated security,
+  only the database child is needed.
+</p>
+
+<h3 class="mt-5"> MESSAGES </h3>
+<ul>
+  <li> verify </li>
+  <ul>
+    <li> Verify that the database connection can be established. </li>
+  </ul>
+</ul>
+
+
+<h3 class="mt-5"> EXAMPLE </h3>
+<pre><code class="code">
+#
+# Postgres query
+#
+
+pg [can] :
+  on_load [script] :
+    load my_appo/data/pg_cons
+    run pg.detail
+  local_dev [pg] :
+    database : my_db
+  detail [query] :
+    database [alias] : pg.local_dev
+    sql : SELECT * FROM users
+
+</code></pre>
+
+
+<h3 class="mt-5"> SEE ALSO </h3>
+
+<ul>
+  <li> <%= link 'Base Object', '/objs/base' %> </li>
+  <li> <%= link 'query', '/objs/data/query' %> </li>
+  <li> <%= link 'mysql', '/objs/data/mysql' %> </li>
+  <li> <%= link 'sqlite', '/objs/data/sqlite' %> </li>
+</ul>
+
+END

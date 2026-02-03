@@ -6,21 +6,21 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 version = File.read(File.expand_path("lib/VERSION", __dir__)).strip
 
 Gem::Specification.new do |spec|
-  spec.name          = 'gloo-sqlite'
+  spec.name          = 'gloo-pg'
   spec.version       = version
   spec.authors       = ['Eric Crane']
   spec.email         = ['eric.crane@mac.com']
 
-  spec.summary       = %q{Gloo core library. SQLite support.}
-  spec.description   = %q{Adds SQLite support to Gloo.}
+  spec.summary       = %q{Gloo core library. PostgreSQL support.}
+  spec.description   = %q{Adds PostgreSQL support to Gloo.}
   spec.homepage      = "https://gloo.ecrane.us/"
   spec.license       = 'MIT'
 
   spec.metadata["gloo.type"] = "core-library"
 
   spec.files = [
-    "lib/gloo-sqlite.rb",
-    "lib/sqlite.rb"
+    "lib/gloo-pg.rb",
+    "lib/pg.rb"
   ]
 
   spec.require_paths = ['lib']
@@ -28,5 +28,5 @@ Gem::Specification.new do |spec|
   # 
   # Database specific dependencies
   # 
-  spec.add_dependency 'pg', '~> 1.5.4'
+  spec.add_dependency 'pg', '~> 1.5', '>= 1.5.3'
 end
