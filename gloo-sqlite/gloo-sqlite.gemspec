@@ -28,5 +28,5 @@ Gem::Specification.new do |spec|
   # 
   # Database specific dependencies
   # 
-  spec.add_dependency 'pg', '~> 1.5.4'
+  spec.add_dependency 'sqlite3', '~> 1.4', '>= 1.4.2'
 end
