@@ -5,7 +5,7 @@
 #
 require 'redcarpet'
 
-class Markdown < Gloo::Core::Obj
+class Md < Gloo::Core::Obj
 
   KEYWORD = 'markdown'.freeze
   KEYWORD_SHORT = 'md'.freeze
@@ -72,7 +72,7 @@ class Markdown < Gloo::Core::Obj
   #
   def msg_render
     html = MarkdownExt.render_extensions( value )
-    html = Markdown.md_2_html( html )
+    html = Md.md_2_html( html )
 
     # Put the HTML in the optional parameter if one is given.
     if @params&.token_count&.positive?

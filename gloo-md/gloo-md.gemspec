@@ -20,7 +20,8 @@ Gem::Specification.new do |spec|
 
   spec.files = [
     "lib/gloo-md.rb",
-    "lib/md.rb"
+    "lib/md.rb",
+    "lib/markdown_ext.rb"
   ]
 
   spec.require_paths = ['lib']
