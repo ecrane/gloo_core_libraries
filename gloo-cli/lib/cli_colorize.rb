@@ -5,7 +5,7 @@
 #
 require 'colorized_string'
 
-class Colorize < Gloo::Core::Obj
+class CliColorize < Gloo::Core::Obj
 
   KEYWORD = 'colorize'.freeze
   KEYWORD_SHORT = 'color'.freeze

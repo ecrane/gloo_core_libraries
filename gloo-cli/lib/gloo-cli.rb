@@ -3,7 +3,7 @@
 # 
 # This file is loaded when someone does `require 'gloo-cli'`
 # 
-require 'colorize'
+require 'cli_colorize'
 require 'cli_confirm'
 require 'menu'
 require 'menu_item'
@@ -19,12 +19,26 @@ class CliInit < Gloo::Plugin::Base
     # Register verbs and objects.
     # 
     def register( callback )
-      callback.register_obj( Colorize )
+      callback.register_obj( CliColorize )
       callback.register_obj( CliConfirm )
       callback.register_obj( Menu )
       callback.register_obj( MenuItem )
       callback.register_obj( Prompt )
       callback.register_obj( Select )
+    end
+
+end
+
+# 
+# Registers the extension.
+# 
+class MdInit < Gloo::Plugin::Base
+
+    # 
+    # Register verbs and objects.
+    # 
+    def register( callback )
+      callback.register_obj( Md )
     end
 
 end

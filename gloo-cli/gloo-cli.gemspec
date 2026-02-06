@@ -20,7 +20,7 @@ Gem::Specification.new do |spec|
 
   spec.files = [
     "lib/gloo-cli.rb",
-    "lib/colorize.rb",
+    "lib/cli_colorize.rb",
     "lib/cli_confirm.rb",
     "lib/menu.rb",
     "lib/menu_item.rb",
