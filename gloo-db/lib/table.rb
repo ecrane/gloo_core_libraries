@@ -207,8 +207,14 @@ class Table < Gloo::Core::Obj
         params[ :always_rows ] = true
       end
 
-      helper = Gloo::WebSvr::TableRenderer.new( @engine )
-      return helper.data_to_table params
+      # helper = Gloo::WebSvr::TableRenderer.new( @engine )
+      helper = @engine.running_app&.create_table_renderer
+      if helper
+        return helper.data_to_table params
+      else
+        @engine.log.error "Table renderer not found."
+        return nil
+      end
     rescue => e
       @engine.log_exception e
       return nil
