@@ -28,6 +28,8 @@ class MarkdownExt
   # Render gloo markdown extensions.
   # 
   def self.render_extensions data
+    return '' if data.nil?
+
     out_data = ""
     one_ext = ""
     in_ext = false
