@@ -37,7 +37,7 @@ module WebSvr
     def initialize( engine, handler, env = nil )
       @engine = engine
       @log = @engine.log
-      @request_params = RequestParams.new( @log )
+      @request_params = RequestParams.new( @engine, @log )
 
       @handler = handler
 

@@ -23,7 +23,8 @@ module WebSvr
     #
     # Set up the web server.
     #
-    def initialize( log )
+    def initialize( engine, log ) 
+      @engine = engine
       @log = log
     end
 
@@ -66,38 +67,43 @@ module WebSvr
     # This is very rough and will need to be fixed.
     # 
     def init_multipart body
-      # puts "*********** first lines: *********** "
-      # body.lines[0..3].each { |line| puts line }
-      # puts "*********** last lines: *********** "
-      # body.lines.last(5).each { |line| puts line }
-      # puts "************************************"
+      begin
+        # puts "*********** first lines: *********** "
+        # body.lines[0..3].each { |line| puts line }
+        # puts "*********** last lines: *********** "
+        # body.lines.last(5).each { |line| puts line }
+        # puts "************************************"
 
-      # boundary = body.lines.first
-      # puts "boundary: #{boundary}"
+        # boundary = body.lines.first
+        # puts "boundary: #{boundary}"
 
-      header = body.lines[1..3].join
-      # puts "header: #{header}"
+        header = body.lines[1..3].join
+        # puts "header: #{header}"
 
-      footer = body.lines.last(5).join
-      # puts "footer: #{footer}"
+        footer = body.lines.last(5).join
+        # puts "footer: #{footer}"
 
-      binary_data = body.lines[4..-6].join
-      # puts "binary_data length: #{binary_data.length}"
-      # puts "binary first line: #{binary_data.lines.first}"
-      # puts "binary last line: #{binary_data.lines.last}"
+        binary_data = body.lines[4..-6].join
+        # puts "binary_data length: #{binary_data.length}"
+        # puts "binary first line: #{binary_data.lines.first}"
+        # puts "binary last line: #{binary_data.lines.last}"
 
-      i = header.lines.first.index( 'filename=' )
-      filename = header.lines.first[ i+10..-4 ]
-      content_type = header.lines.second[14..-3]
-      # puts "filename: #{filename}"
-      # puts "content_type: #{content_type}"
+        i = header.lines.first.index( 'filename=' )
+        filename = header.lines.first[ i+10..-4 ]
+        content_type = header.lines.second[14..-3]
+        # puts "filename: #{filename}"
+        # puts "content_type: #{content_type}"
 
-      @body_binary = body
-      @body_params = {}
-      @body_params[ 'content_type' ] = content_type
-      @body_params[ 'file_name' ] = filename
-      @body_params[ 'file_size' ] = binary_data.length
-      @body_params[ 'file_data' ] = binary_data
+        @body_binary = body
+        @body_params = {}
+        @body_params[ 'content_type' ] = content_type
+        @body_params[ 'file_name' ] = filename
+        @body_params[ 'file_size' ] = binary_data.length
+        @body_params[ 'file_data' ] = binary_data
+      rescue => ex
+        @engine.log_exception ex
+        # @log.error "Error parsing multipart request", ex
+      end
     end
 
 
