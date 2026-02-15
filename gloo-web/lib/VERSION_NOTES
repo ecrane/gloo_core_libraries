@@ -1,6 +1,8 @@
-1.1 - 2026.10.14
+1.2 - 2026.02.15
+ - Renamed user lib to common
+
+1.1 - 2026.02.14
  - Error handing in multipart request parsing
 
 1.0 - 2026.01.24
  - Initial release
-

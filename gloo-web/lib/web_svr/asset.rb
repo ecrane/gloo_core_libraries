@@ -7,7 +7,7 @@
 module WebSvr
   class Asset
     
-    LIB_FOLDER = 'lib'.freeze
+    COMMON_FOLDER = 'common'.freeze
     ASSET_FOLDER = 'asset'.freeze
     IMAGE_FOLDER = 'image'.freeze
     STYLESHEET_FOLDER = 'stylesheet'.freeze
@@ -43,8 +43,8 @@ module WebSvr
     # Get the asset folder in the User's lib.
     # Returns nil if it does not exist.
     #
-    def lib_asset_folder
-      dir = File.join( @engine.settings.user_root, LIB_FOLDER, ASSET_FOLDER )
+    def common_asset_folder
+      dir = File.join( @engine.settings.user_root, COMMON_FOLDER, ASSET_FOLDER )
       return dir if Dir.exist?( dir )
 
       return nil
@@ -54,8 +54,8 @@ module WebSvr
     # Get the stylesheets folder in the User's lib.
     # Returns nil if it does not exist.
     #
-    def lib_stylesheet_folder
-      dir = File.join( lib_asset_folder, STYLESHEET_FOLDER )
+    def common_stylesheet_folder
+      dir = File.join( common_asset_folder, STYLESHEET_FOLDER )
       return dir if Dir.exist?( dir )
 
       return nil
@@ -65,8 +65,8 @@ module WebSvr
     # Get the javascript folder in the User's lib.
     # Returns nil if it does not exist.
     #
-    def lib_javascript_folder
-      dir = File.join( lib_asset_folder, JAVASCRIPT_FOLDER )
+    def common_javascript_folder
+      dir = File.join( common_asset_folder, JAVASCRIPT_FOLDER )
       return dir if Dir.exist?( dir )
 
       return nil
@@ -76,8 +76,8 @@ module WebSvr
     # Get the images folder in the User's lib.
     # Returns nil if it does not exist.
     #
-    def lib_image_folder
-      dir = File.join( lib_asset_folder, IMAGE_FOLDER )
+    def common_image_folder
+      dir = File.join( common_asset_folder, IMAGE_FOLDER )
       return dir if Dir.exist?( dir )
 
       return nil
@@ -130,7 +130,7 @@ module WebSvr
 
       # Try the lib assets if not found
       unless File.exist? pn
-        lib = lib_asset_folder
+        lib = common_asset_folder
         pn = File.join( lib, file.value ) if lib
       end
 
@@ -269,7 +269,7 @@ module WebSvr
     def add_images
       @log.debug 'Adding image asset routes to web server…'
       
-      lib = lib_image_folder
+      lib = common_image_folder
       if lib
         add_files_in_folder( lib, @images, IMAGE_FOLDER )
       end
@@ -287,7 +287,7 @@ module WebSvr
     def add_stylesheets
       @log.debug 'Adding stylesheet asset routes to web server…'
 
-      lib = lib_stylesheet_folder
+      lib = common_stylesheet_folder
       if lib
         add_files_in_folder( lib, @stylesheets, STYLESHEET_FOLDER )
       end
@@ -310,7 +310,7 @@ module WebSvr
     def add_javascript
       @log.debug 'Adding javascript asset routes to web server…'
 
-      lib = lib_javascript_folder
+      lib = common_javascript_folder
       if lib
         add_files_in_folder( lib, @javascript, JAVASCRIPT_FOLDER )
       end
