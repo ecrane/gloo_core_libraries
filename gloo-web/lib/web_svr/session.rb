@@ -163,8 +163,13 @@ module WebSvr
     def decode_decrypt( data )
       return nil unless data && key && iv
 
-      data = Gloo::Objs::Cipher.decrypt( data, key, iv )
-      return JSON.parse( data )
+      begin
+        data = Gloo::Objs::Cipher.decrypt( data, key, iv )
+        return JSON.parse( data )
+      rescue => e
+        @engine.log_exception e
+        return nil
+      end
     end
 
     # 
