@@ -28,17 +28,3 @@ class CliInit < Gloo::Plugin::Base
     end
 
 end
-
-# 
-# Registers the extension.
-# 
-class MdInit < Gloo::Plugin::Base
-
-    # 
-    # Register verbs and objects.
-    # 
-    def register( callback )
-      callback.register_obj( Md )
-    end
-
-end
