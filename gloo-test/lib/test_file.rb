@@ -6,8 +6,9 @@ class TestFile
   #
   # Set up the test file.
   #
-  def initialize( engine )
-    @engnine = engine
+  def initialize( engine, path_name )
+    @engine = engine
+    @path_name = path_name
 
     @tests = []
   end

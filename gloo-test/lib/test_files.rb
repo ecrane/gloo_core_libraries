@@ -3,6 +3,8 @@
 #
 class TestFiles
 
+  TEST_FILE_PATTERN = '**/*.test.gloo'
+
   #
   # Set up the test file.
   #
@@ -16,28 +18,59 @@ class TestFiles
   # Detect test files.
   #
   def detect_files
-    # TODO: Detect test files
     puts "Detecting test files…"
 
-    if @input_files
-      @input_files.each { |f| puts "Test file specified: #{f}" }
+    if @input_files.length > 0
+      use_input_files
     else
-      puts "No test files specified, looking in current folder…"
-      dir = Dir.pwd
-      puts "Current directory: #{dir}"
-      files = dir.glob("*.test.gloo")
-      puts "Found files: #{files}"
+      # Use the current directory
+      look_for_files_in Dir.pwd
     end
 
+    puts "Found #{count} test files"
+  end
 
-    puts "Found #{@files.count} test files"
+  # 
+  # Use the files and or directories specified by the user.
+  #
+  def use_input_files
+    puts "Input files specified: #{@input_files}"
+    @input_files.each do |f| 
+      puts "Test file specified: #{f}"
+      if Dir.exist?( f )
+        # Expand path for file
+        f = File.expand_path( f )
+        look_for_files_in f
+      elsif File.exist?( f )
+        add( f )
+      else
+        # TODO: Show error
+        puts "Test file does not exist: #{f}"
+      end
+    end
+  end
+
+  #
+  # Look for test files in a directory.
+  # The directory might be provided as a parameter to the test runner,
+  # or if no parameter is provided, it is the current directory.
+  #
+  def look_for_files_in dir
+    puts "Looking for test files in: #{dir}"
+    root = File.join( dir, TEST_FILE_PATTERN )
+    files = Dir.glob( root )
+    puts "Found files: #{@files}"
+    files.each do |f| 
+      puts "Test file: #{f}"
+      add f
+    end
   end
   
   #
   # Add a test file to the collection.
   #
   def add( file )
-    @files << file
+    @files << TestFile.new( @engine, file )
   end
 
   # 
