@@ -7,11 +7,11 @@ class TestRunner < Gloo::Core::Verb
   #
   # Set up the test runner.
   #
-  def initialize( engine )
+  def initialize( engine, input_files = nil )
     @engnine = engine
 
-    @files = TestFiles.new( engine )
-    @results = Results.new( engine )
+    @files = TestFiles.new( @engine, input_files )
+    @results = Results.new( @engine )
 
     puts "TestRunner initialized"
   end

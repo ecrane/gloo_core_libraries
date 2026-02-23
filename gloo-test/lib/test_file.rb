@@ -8,12 +8,21 @@ class TestFile
   #
   def initialize( engine )
     @engnine = engine
+
+    @tests = []
   end
 
   #
   # Execute all tests in this file and report results.
   #
   def run
+  end
+
+  #
+  # Get the number of tests run.
+  #
+  def tests_run
+    return @tests.length
   end
 
 end
