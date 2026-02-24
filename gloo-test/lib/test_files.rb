@@ -2,6 +2,7 @@
 # The collection of Test Files.
 #
 class TestFiles
+  include Enumerable
 
   TEST_FILE_PATTERN = '**/*.test.gloo'
 
@@ -9,7 +10,7 @@ class TestFiles
   # Set up the test file.
   #
   def initialize( engine, input_files = nil )
-    @engnine = engine
+    @engine = engine
     @input_files = input_files
     @files = []
   end
@@ -18,7 +19,7 @@ class TestFiles
   # Detect test files.
   #
   def detect_files
-    puts "Detecting test files…"
+    @engine.log.debug "Detecting test files…"
 
     if @input_files.length > 0
       use_input_files
@@ -27,16 +28,16 @@ class TestFiles
       look_for_files_in Dir.pwd
     end
 
-    puts "Found #{count} test files"
+    @engine.log.debug "Found #{count} test files"
   end
 
   # 
   # Use the files and or directories specified by the user.
   #
   def use_input_files
-    puts "Input files specified: #{@input_files}"
+    @engine.log.debug "Input files specified: #{@input_files}"
     @input_files.each do |f| 
-      puts "Test file specified: #{f}"
+      @engine.log.debug "Test file specified: #{f}"
       if Dir.exist?( f )
         # Expand path for file
         f = File.expand_path( f )
@@ -56,12 +57,12 @@ class TestFiles
   # or if no parameter is provided, it is the current directory.
   #
   def look_for_files_in dir
-    puts "Looking for test files in: #{dir}"
+    @engine.log.debug "Looking for test files in: #{dir}"
     root = File.join( dir, TEST_FILE_PATTERN )
     files = Dir.glob( root )
-    puts "Found files: #{@files}"
+    @engine.log.debug "Found files: #{@files}"
     files.each do |f| 
-      puts "Test file: #{f}"
+      @engine.log.debug "Found: #{f}"
       add f
     end
   end
@@ -74,10 +75,25 @@ class TestFiles
   end
 
   # 
+  # Randomize the order of the test files.
+  #
+  def randomize
+    @engine.log.debug "Randomizing test files…"
+    @files.shuffle!
+  end
+
+  # 
   # Get the number of test files.
   #
   def count
     return @files.length
+  end
+
+  #
+  # Iterator method for Enumerable interface.
+  #
+  def each(&block)
+    @files.each(&block)
   end
 
 end

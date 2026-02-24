@@ -4,13 +4,22 @@
 #
 class Results 
 
+  attr_accessor :file_count, :test_count, 
+    :pass_count, :fail_count, :assert_count
+  
   #
   # Set up the results collection.
   #
   def initialize( engine )
-    @engnine = engine
+    @engine = engine
+
+    @file_count = 0
+    @test_count = 0
+    @pass_count = 0
+    @fail_count = 0
+    @assert_count = 0
     
-    puts "Results initialized"
+    @engine.log.debug "Results initialized"
   end
 
   # ---------------------------------------------------------------------
@@ -36,6 +45,30 @@ class Results
   # 
   def duration
     return @end_time - @start_time
+  end
+
+
+  # ---------------------------------------------------------------------
+  #    Show Results
+  # ---------------------------------------------------------------------
+
+  #
+  # Show the results.
+  #
+  def show_results
+    delta = duration.round( 2 )
+    puts
+    puts get_result_summary.white
+    puts "Tests finished in #{delta} seconds".white
+    puts
+  end
+
+  # 
+  # Get a textual summary of the results.
+  #
+  def get_result_summary
+    return "Files: #{@file_count} Tests: #{@test_count} Passed: #{@pass_count} " + 
+      "Failed: #{@fail_count} Assertions: #{@assert_count}"
   end
 
 end

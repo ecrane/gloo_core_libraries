@@ -26,6 +26,10 @@ class TestFile
     return @tests.length
   end
 
+  def show_info
+    puts "Test file: #{@path_name}"
+  end
+
 end
 
 
