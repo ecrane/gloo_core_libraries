@@ -57,16 +57,15 @@ class TestRunner < Gloo::Core::Verb
 
   #
   # Run tests for a single file.
+  # Once done, reset the engine's state.
   #
   def run_one_file( file )
-    print '.'
-    # file.show_info
-
-    # Load the test file
     # Run all tests in the file
-    # Collect the results
     # Add the results to the overall results
-    # Reset the engine
+    file.run_tests( @results )
+
+    # Reset the engine's state
+    @engine.reset_state
   end
 end
 

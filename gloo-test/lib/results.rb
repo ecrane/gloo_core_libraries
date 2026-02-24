@@ -67,8 +67,8 @@ class Results
   # Get a textual summary of the results.
   #
   def get_result_summary
-    return "Files: #{@file_count} Tests: #{@test_count} Passed: #{@pass_count} " + 
-      "Failed: #{@fail_count} Assertions: #{@assert_count}"
+    return "Files: #{@file_count} • Tests: #{@test_count} • Passed: #{@pass_count} " + 
+      "• Failed: #{@fail_count} • Assertions: #{@assert_count}"
   end
 
 end
