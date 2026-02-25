@@ -25,11 +25,14 @@ class Assert < Gloo::Core::Verb
   #
   def run
     begin
-      if @engine.heap.it.true?
+      @engine.context_object.assert_count += 1
+      if @engine.heap.it.is_true?
         # Assertion passes
+        @engine.context_object.passed = true
         return true
       else
         # Assertion fails
+        @engine.context_object.passed = false
         return false
       end
     rescue => ex

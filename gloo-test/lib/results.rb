@@ -13,8 +13,10 @@ class Results
   def initialize( engine )
     @engine = engine
 
+    @all_results = []
+    @failures = []
+
     @file_count = 0
-    @test_count = 0
     @pass_count = 0
     @fail_count = 0
     @assert_count = 0
@@ -49,6 +51,24 @@ class Results
 
 
   # ---------------------------------------------------------------------
+  #    Results
+  # ---------------------------------------------------------------------
+
+  # 
+  # Add a result to the collection.
+  #
+  def add_result( result )
+    @all_results << result
+    @failures << result unless result.passed
+
+    @pass_count += 1 if result.passed
+    @fail_count += 1 unless result.passed
+    @assert_count += result.assert_count
+    @assert_count += result.refute_count
+  end
+
+
+  # ---------------------------------------------------------------------
   #    Show Results
   # ---------------------------------------------------------------------
 
@@ -67,7 +87,7 @@ class Results
   # Get a textual summary of the results.
   #
   def get_result_summary
-    return "Files: #{@file_count} • Tests: #{@test_count} • Passed: #{@pass_count} " + 
+    return "Files: #{@file_count} • Tests: #{@all_results.length} • Passed: #{@pass_count} " + 
       "• Failed: #{@fail_count} • Assertions: #{@assert_count}"
   end
 

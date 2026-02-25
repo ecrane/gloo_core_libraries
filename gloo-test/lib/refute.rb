@@ -26,11 +26,14 @@ class Refute < Gloo::Core::Verb
   #
   def run
     begin
-      if @engine.heap.it.false?
+      @engine.context_object.refute_count += 1
+      if @engine.heap.it.is_false?
         # Refutation passes
+        @engine.context_object.passed = true
         return true
       else
         # Refutation fails
+        @engine.context_object.passed = false
         return false
       end
     rescue => ex

@@ -24,14 +24,21 @@ class TestFile
 
     # Find all Test objects in the loaded file(s)
     # The loaded file might have loaded other files
+    @tests = Gloo::Core::ObjFinder.by_type( @engine, 'test' )
+
+    # randomize the tests
+    @tests.shuffle!
 
     # For each Test object, run its on_test script
+    @tests.each do |o|
+      result = o.run_test
+      results.add_result result
+    end
 
     # Collect results from each test
 
     # Aggregate result from test into overall results
 
-    print '.'
     # file.show_info
   end
 

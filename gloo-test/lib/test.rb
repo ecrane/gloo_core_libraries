@@ -4,10 +4,9 @@
 class Test < Gloo::Core::Obj
 
   KEYWORD = 'test'.freeze
-  KEYWORD_SHORT = 'case'.freeze
   TEST_NAME = 'name'.freeze
   TEST_EXPECTS = 'expects'.freeze
-  TEST_ON_TEST = 'on_test'.freeze
+  ON_TEST_EVENT = 'on_test'.freeze
 
 
   #
@@ -19,10 +18,28 @@ class Test < Gloo::Core::Obj
 
   #
   # The short name of the object type.
+  # Same as the typename.
   #
   def self.short_typename
-    return KEYWORD_SHORT
+    return KEYWORD
   end
+
+  # 
+  # Get the test name.
+  #
+  def test_name
+    o = find_child TEST_NAME
+    return o ? o.value : 'Unknown'
+  end
+
+  #
+  # Get the test expectation.
+  #
+  def test_expects
+    o = find_child TEST_EXPECTS
+    return o ? o.value : 'No Expectation set'
+  end
+
 
   # ---------------------------------------------------------------------
   #    Children
@@ -42,7 +59,7 @@ class Test < Gloo::Core::Obj
     fac = @engine.factory
     fac.create_string TEST_NAME, '', self
     fac.create_string TEST_EXPECTS, '', self
-    fac.create_script TEST_ON_TEST, '', self
+    fac.create_script ON_TEST_EVENT, '', self
   end
 
 
@@ -61,12 +78,30 @@ class Test < Gloo::Core::Obj
   # Run the colorize command.
   #
   def msg_run
-    # msg = ''
-    # children.each do |o|
-    #   msg += ColorizedString[ o.value_display ].colorize( o.name.to_sym )
-    # end
-    # @engine.log.show msg
-    # @engine.heap.it.set_to msg.to_s
+  end
+
+  # 
+  # Run the test.
+  #
+  def run_test
+    result = Result.new( @engine, self )
+    @engine.context_object = result
+    run_on_test
+    @engine.context_object = nil
+
+    result.show_result_symbol
+
+    return result
+  end
+
+  #
+  # Run the on_test script.
+  #
+  def run_on_test
+    o = find_child ON_TEST_EVENT
+    return unless o
+
+    Gloo::Exec::Dispatch.message( @engine, 'run', o )
   end
 
 end
