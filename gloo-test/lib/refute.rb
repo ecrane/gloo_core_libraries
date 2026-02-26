@@ -6,6 +6,7 @@ class Refute < Gloo::Core::Verb
 
   KEYWORD = 'refute'.freeze
   KEYWORD_SHORT = 'expect_not'.freeze
+  DEFAULT_MESSAGE = 'Refutation failed'.freeze
 
   #
   # Get the Verb's keyword.
@@ -34,11 +35,24 @@ class Refute < Gloo::Core::Verb
       else
         # Refutation fails
         @engine.context_object.passed = false
+        @engine.context_object.add_message(get_message)
         return false
       end
     rescue => ex
       @engine.log_exception ex
     end
+  end
+
+  #
+  # Get the refutation message.
+  #
+  def get_message
+    if @tokens.token_count > 1
+      expr = Gloo::Expr::Expression.new( @engine, @tokens.params )
+      result = expr.evaluate
+      return result
+    end
+    return DEFAULT_MESSAGE
   end
 
 end

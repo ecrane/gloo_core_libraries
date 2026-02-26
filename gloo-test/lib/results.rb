@@ -78,17 +78,37 @@ class Results
   def show_results
     delta = duration.round( 2 )
     puts
-    puts get_result_summary.white
+    puts get_result_summary
     puts "Tests finished in #{delta} seconds".white
     puts
   end
 
+  #
+  # Show the failures.
+  #
+  def show_failures
+    if @fail_count > 0
+      puts
+      puts "*** Failures (#{@fail_count}) ***".red
+      puts
+      @failures.each do |failure|
+        failure.show_failure
+      end
+    end
+  end
+  
   # 
   # Get a textual summary of the results.
   #
   def get_result_summary
-    return "Files: #{@file_count} • Tests: #{@all_results.length} • Passed: #{@pass_count} " + 
-      "• Failed: #{@fail_count} • Assertions: #{@assert_count}"
+    str = "Tests: #{@all_results.length} • Passed: #{@pass_count} • ".white
+    if @fail_count > 0
+      str += " Failed: #{@fail_count} ".red
+    else
+      str += " Failed: #{@fail_count} ".white
+    end
+    str += "\n  Assertions: #{@assert_count} • Files: #{@file_count}".yellow
+    return str
   end
 
 end

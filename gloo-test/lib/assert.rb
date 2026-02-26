@@ -5,7 +5,8 @@ class Assert < Gloo::Core::Verb
 
   KEYWORD = 'assert'.freeze
   KEYWORD_SHORT = 'expect'.freeze
-
+  DEFAULT_MESSAGE = 'Assertion failed'.freeze
+  
   #
   # Get the Verb's keyword.
   #
@@ -33,11 +34,24 @@ class Assert < Gloo::Core::Verb
       else
         # Assertion fails
         @engine.context_object.passed = false
+        @engine.context_object.add_message get_message
         return false
       end
     rescue => ex
       @engine.log_exception ex
     end
+  end
+
+  # 
+  # Get the assertion message.
+  #
+  def get_message
+    if @tokens.token_count > 1
+      expr = Gloo::Expr::Expression.new( @engine, @tokens.params )
+      result = expr.evaluate
+      return result
+    end
+    return DEFAULT_MESSAGE
   end
 
 end

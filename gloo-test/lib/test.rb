@@ -4,8 +4,7 @@
 class Test < Gloo::Core::Obj
 
   KEYWORD = 'test'.freeze
-  TEST_NAME = 'name'.freeze
-  TEST_EXPECTS = 'expects'.freeze
+  TEST_DESC = 'description'.freeze
   ON_TEST_EVENT = 'on_test'.freeze
 
 
@@ -25,19 +24,11 @@ class Test < Gloo::Core::Obj
   end
 
   # 
-  # Get the test name.
+  # Get the test description.
   #
-  def test_name
-    o = find_child TEST_NAME
+  def test_desc
+    o = find_child TEST_DESC
     return o ? o.value : 'Unknown'
-  end
-
-  #
-  # Get the test expectation.
-  #
-  def test_expects
-    o = find_child TEST_EXPECTS
-    return o ? o.value : 'No Expectation set'
   end
 
 
@@ -57,8 +48,7 @@ class Test < Gloo::Core::Obj
   # for default configurations.
   def add_default_children
     fac = @engine.factory
-    fac.create_string TEST_NAME, '', self
-    fac.create_string TEST_EXPECTS, '', self
+    fac.create_string TEST_DESC, '', self
     fac.create_script ON_TEST_EVENT, '', self
   end
 

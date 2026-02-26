@@ -26,6 +26,7 @@ class TestRunner < Gloo::Core::Verb
     run_for_files
     @results.end_timer
 
+    @results.show_failures
     @results.show_results
     @engine.log.debug "TestRunner is finished"
   end
