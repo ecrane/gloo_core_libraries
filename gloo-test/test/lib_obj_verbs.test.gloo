@@ -1,0 +1,25 @@
+#
+# Addition tests
+#
+
+tests [can] :
+  tst [can] :
+    lib_obj_verbs [can] :
+
+      test_obj [test] :
+        description [string] : The test object exists
+        on_test [script] :
+          exists? object test
+          assert "test object should exist"
+
+      assert_verb [test] :
+        description [string] : The assert verb exists
+        on_test [script] :
+          exists? verb assert
+          assert "assert verb should exist"
+
+      refute_verb [test] :
+        description [string] : The refute verb exists
+        on_test [script] :
+          exists? verb refute
+          assert "refute verb should exist"
