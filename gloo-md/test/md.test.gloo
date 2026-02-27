@@ -1,0 +1,14 @@
+#
+# Markdown tests
+#
+tests [can] :
+  md [can] :
+
+    on_load [script] :
+      load lib md
+
+    md_object [test] :
+      description [string] : The md object exists
+      on_test [script] :
+        exists? object md
+        assert "md object should exist"

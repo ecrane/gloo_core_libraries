@@ -1,9 +1,8 @@
 #
-# Addition tests
+# Gloo Test Tests
 #
-
 tests [can] :
-  tst [can] :
+  gloo-test [can] :
     lib_obj_verbs [can] :
 
       test_obj [test] :

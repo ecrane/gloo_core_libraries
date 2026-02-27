@@ -1,0 +1,30 @@
+#
+# Addition tests
+#
+
+tests [can] :
+  web [can] :
+
+    on_load [script] :
+      load lib web
+
+    test_obj [test] :
+      description [string] : The web objects exist
+      on_test [script] :
+        exists? object page
+        assert "page object should exist"
+
+        exists? object element
+        assert "element object should exist"
+
+        exists? object partial
+        assert "partial object should exist"
+        
+        exists? object server
+        assert "server object should exist"
+        
+        exists? object form
+        assert "form object should exist"
+        
+        exists? object field
+        assert "field object should exist"

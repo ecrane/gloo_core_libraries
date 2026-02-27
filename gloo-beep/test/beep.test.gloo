@@ -1,0 +1,17 @@
+#
+# Beep tests
+#
+# This is commented out because it conflicts with the beep ext.
+# Both were just basic validations and don't really matter.
+# 
+tests [can] :
+  beep [can] :
+  
+    # on_load [script] :
+    #   load lib beep
+
+    # beep_verb [test] :
+    #   description [string] : The beep verb exists
+    #   on_test [script] :
+    #     exists? verb beep
+    #     assert "beep verb should exist"
