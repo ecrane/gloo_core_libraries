@@ -1,0 +1,20 @@
+#
+# Gloo Test Object
+#
+tests [can] :
+  gloo-test [can] :
+    test_obj [can] :
+
+      test_creation [test] :
+        description [string] : Verivy the creation of a test object
+        on_test [script] :
+          create tests.gloo-test.test_obj.t as test
+
+          exists? instance ^^.t
+          assert "test object should exist"
+
+          exists? instance ^^.t.description
+          assert "test object should have a description"
+
+          exists? instance ^^.t.on_test
+          assert "test object should have an on_test method"
