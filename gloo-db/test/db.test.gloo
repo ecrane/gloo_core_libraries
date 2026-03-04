@@ -1,0 +1,17 @@
+#
+# Database tests
+#
+tests [can] :
+  db [can] :
+
+    on_load [script] :
+      load lib db
+
+    objects [test] :
+      description [string] : Check databse objects
+      on_test [script] :
+        exists? object query
+        assert "query object should exist"
+
+        exists? object table
+        assert "table object should exist"

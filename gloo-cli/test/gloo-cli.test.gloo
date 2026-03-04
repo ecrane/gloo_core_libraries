@@ -1,0 +1,41 @@
+#
+# CLI Tests
+#
+tests [can] :
+  gloo-cli [can] :
+    lib_objects [can] :
+
+      on_load [script] :
+        load lib cli
+
+      cli_objects [test] :
+        description [string] : confirm existence of cli object types
+        on_test [script] :
+          exists? object colorize
+          assert "expected the colorize object exist"
+
+          exists? object confirm
+          assert "expected the confirm object exist"
+
+          exists? object menu
+          assert "expected the menu object exist"
+
+          exists? object menu_item
+          assert "expected the menu item object exist"
+
+          exists? object select
+          assert "expected the select object exist"
+
+          exists? object prompt
+          assert "expected the prompt object exist"
+
+      run_msgs [test] :
+        description [string] : confirm that objects can be run
+        on_test [script] :
+          create tests.gloo-cli.lib_objects.a as ask
+          check ^^.a for responds_to? ('run')
+          assert "expected to run a prompt"
+
+          create tests.gloo-cli.lib_objects.c as confirm
+          check ^^.c for responds_to? ('run')
+          assert "expected to run a confirmation"

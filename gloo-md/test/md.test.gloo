@@ -12,3 +12,13 @@ tests [can] :
       on_test [script] :
         exists? object md
         assert "md object should exist"
+
+    md_render [test] :
+      description [string] : The md object can render
+      on_test [script] :
+        create tests.md.md as md
+        check ^^.md for responds_to? ('render')
+        assert 'expected md to be able to render'
+
+        check ^^.md for responds_to? ('show')
+        assert 'expected md to be able to show'

@@ -6,7 +6,7 @@ tests [can] :
     test_obj [can] :
 
       test_creation [test] :
-        description [string] : Verivy the creation of a test object
+        description [string] : Verify the creation of a test object
         on_test [script] :
           create tests.gloo-test.test_obj.t as test
 
@@ -18,3 +18,6 @@ tests [can] :
 
           exists? instance ^^.t.on_test
           assert "test object should have an on_test method"
+
+          check ^^.t for responds_to? ('run')
+          assert 'expected a test to be able to run'

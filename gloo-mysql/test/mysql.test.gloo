@@ -1,0 +1,22 @@
+#
+# mysql tests
+#
+tests [can] :
+  mysql [can] :
+
+    on_load [script] :
+      load lib db
+      load lib mysql
+
+    mysql_object [test] :
+      description [string] : The mysql object exists
+      on_test [script] :
+        exists? object mysql
+        assert "mysql object should exist"
+
+    my_sql_verify [test] :
+      description [string] : The mysql object can verify
+      on_test [script] :
+        create tests.mysql.db as mysql
+        check ^^.db for responds_to? ('verify')
+        assert 'expected mysql to be able to verify'

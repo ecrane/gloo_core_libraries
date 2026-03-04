@@ -28,3 +28,27 @@ tests [can] :
         
         exists? object field
         assert "field object should exist"
+
+    server_can_start [test] :
+      description [string] : The web server can start and stop
+      on_test [script] :
+        create tests.web.s as server
+
+        check ^^.s for responds_to? ('start')
+        assert 'expected the server to be able to start'
+
+        check ^^.s for responds_to? ('stop')
+        assert 'expected the server to be able to stop'
+
+    page_can_render [test] :
+      description [string] : A web page can render
+      on_test [script] :
+        create tests.web.p as page
+
+        check ^^.p for responds_to? ('render')
+        assert 'expected a page to be able to render'
+
+        create tests.web.part as partial
+
+        check ^^.part for responds_to? ('render')
+        assert 'expected a partial to be able to render'

@@ -1,0 +1,22 @@
+#
+# sqlite tests
+#
+tests [can] :
+  sqlite [can] :
+
+    on_load [script] :
+      load lib db
+      load lib sqlite
+
+    sqlite_object [test] :
+      description [string] : The sqlite object exists
+      on_test [script] :
+        exists? object sqlite
+        assert "sqlite object should exist"
+
+    verify_msg [test] :
+      description [string] : The sqlite object can verify
+      on_test [script] :
+        create tests.sqlite.db as sqlite
+        check ^^.db for responds_to? ('verify')
+        assert 'expected sqlite to be able to verify'
