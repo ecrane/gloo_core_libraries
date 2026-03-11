@@ -1,11 +1,13 @@
 #
-# A gloo unit test object
+# An email IMAP object
 #
-class Test < Gloo::Core::Obj
+class EmailImap < Gloo::Core::Obj
 
-  KEYWORD = 'test'.freeze
-  TEST_DESC = 'description'.freeze
-  ON_TEST_EVENT = 'on_test'.freeze
+  KEYWORD = 'email_imap'.freeze
+  SERVER = 'server'.freeze
+  PORT = 'port'.freeze
+  USERNAME = 'username'.freeze
+  PASSWORD = 'password'.freeze
 
 
   #
@@ -24,10 +26,31 @@ class Test < Gloo::Core::Obj
   end
 
   # 
-  # Get the test description.
+  # Get the email server.
   #
-  def test_desc
-    o = find_child TEST_DESC
+  def server
+    o = find_child SERVER
+    return o ? o.value : 'Unknown'
+  end
+
+  # Get the email port.
+  #
+  def port
+    o = find_child PORT
+    return o ? o.value : 'Unknown'
+  end
+
+  # Get the email username.
+  #
+  def username
+    o = find_child USERNAME
+    return o ? o.value : 'Unknown'
+  end
+
+  # Get the email password.
+  #
+  def password
+    o = find_child PASSWORD
     return o ? o.value : 'Unknown'
   end
 
@@ -48,8 +71,10 @@ class Test < Gloo::Core::Obj
   # for default configurations.
   def add_default_children
     fac = @engine.factory
-    fac.create_string TEST_DESC, '', self
-    fac.create_script ON_TEST_EVENT, '', self
+    fac.create_string SERVER, '', self
+    fac.create_string PORT, '', self
+    fac.create_string USERNAME, '', self
+    fac.create_string PASSWORD, '', self
   end
 
 
@@ -62,30 +87,6 @@ class Test < Gloo::Core::Obj
   #
   def self.messages
     return super # + [ 'run' ]
-  end
-
-  # 
-  # Run the test.
-  #
-  def run_test
-    result = Result.new( @engine, self )
-    @engine.context_object = result
-    run_on_test
-    @engine.context_object = nil
-
-    result.show_result_symbol
-
-    return result
-  end
-
-  #
-  # Run the on_test script.
-  #
-  def run_on_test
-    o = find_child ON_TEST_EVENT
-    return unless o
-
-    Gloo::Exec::Dispatch.message( @engine, 'run', o )
   end
 
 end

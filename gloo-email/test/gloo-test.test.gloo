@@ -1,0 +1,27 @@
+#
+# Gloo Email Tests
+#
+tests [can] :
+  gloo-email [can] :
+    lib_obj_verbs [can] :
+
+      on_load [script] :
+        load lib email
+
+      email_smtp_obj [test] :
+        description [string] : The email smtp object exists
+        on_test [script] :
+          exists? object email_smtp
+          assert "email smtp object should exist"
+
+      email_imap_obj [test] :
+        description [string] : The email imap object exists
+        on_test [script] :
+          exists? object email_imap
+          assert "email imap object should exist"
+
+      email_msg_obj [test] :
+        description [string] : The email msg object exists
+        on_test [script] :
+          exists? object email
+          assert "email msg object should exist"
