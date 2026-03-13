@@ -29,29 +29,25 @@ class EmailImap < Gloo::Core::Obj
   # Get the email server.
   #
   def server
-    o = find_child SERVER
-    return o ? o.value : 'Unknown'
+    return find_child_value SERVER
   end
 
   # Get the email port.
   #
   def port
-    o = find_child PORT
-    return o ? o.value : 'Unknown'
+    return find_child_value PORT
   end
 
   # Get the email username.
   #
   def username
-    o = find_child USERNAME
-    return o ? o.value : 'Unknown'
+    return find_child_value USERNAME
   end
 
   # Get the email password.
   #
   def password
-    o = find_child PASSWORD
-    return o ? o.value : 'Unknown'
+    return find_child_value PASSWORD
   end
 
 

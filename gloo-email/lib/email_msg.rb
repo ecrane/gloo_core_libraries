@@ -29,9 +29,27 @@ class EmailMsg < Gloo::Core::Obj
   # Get the email subject.
   #
   def subject
-    o = find_child SUBJECT
-    return o ? o.value : 'Unknown'
+    return find_child_value SUBJECT
   end
+  
+  # Get the email body.
+  #
+  def body
+    return find_child_value BODY
+  end
+  
+  # Get the email to.
+  #
+  def to
+    return find_child_value TO
+  end
+  
+  # Get the email from.
+  #
+  def from
+    return find_child_value FROM
+  end
+  
 
 
   # ---------------------------------------------------------------------
