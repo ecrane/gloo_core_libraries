@@ -49,7 +49,16 @@ class EmailMsg < Gloo::Core::Obj
   def from
     return find_child_value FROM
   end
-  
+
+  # 
+  # Get the mail message to send.
+  # 
+  # Returns:
+  #   A mail message.
+  # 
+  def get_msg
+    return Msg.new( to, from, subject, body )
+  end
 
 
   # ---------------------------------------------------------------------
@@ -84,6 +93,27 @@ class EmailMsg < Gloo::Core::Obj
   #
   def self.messages
     return super + [ 'send' ]
+  end
+
+  #
+  # Send an email.
+  #
+  def msg_send
+    if @params&.token_count&.positive?
+      smtp_pn = Gloo::Core::Pn.new( @engine, @params.tokens.first )
+      unless smtp_pn&.exists?
+        @engine.err 'SMTP server does not exist'
+        return
+      end
+    else
+      @engine.err 'Email Message is required'
+      return
+    end
+    config = smtp_pn.resolve.get_config
+    msg = get_msg
+
+    smtp = Smtp.new( @engine, config )
+    smtp.send msg
   end
 
 end

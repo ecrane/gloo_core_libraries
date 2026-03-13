@@ -31,6 +31,13 @@ class Msg
     return mail
   end
 
+  # 
+  # Convert the message to a string.
+  # This is used for debugging and logging.
+  # 
+  # Returns:
+  #   A string representation of the message.
+  # 
   def to_s
     return "Msg(to: #{@to}, from: #{@from}, subject: #{@subject}, body: #{@body})"
   end

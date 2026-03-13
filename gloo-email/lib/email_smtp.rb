@@ -93,14 +93,19 @@ class EmailSmtp < Gloo::Core::Obj
   # Send an email.
   #
   def msg_send
-    to = "eric.crane@mac.com"
-    from = "eric.n.crane@gmail.com"
-    subject = "Test Email from gloo"
-    body = "Woot!\n\nThis is a test email sent from gloo."
-    msg = Msg.new( to, from, subject, body )
-    puts msg
+    if @params&.token_count&.positive?
+      msg_pn = Gloo::Core::Pn.new( @engine, @params.tokens.first )
+      unless msg_pn&.exists?
+        @engine.err 'Email Message does not exist'
+        return
+      end
+    else
+      @engine.err 'Email Message is required'
+      return
+    end
+    msg = msg_pn.resolve.get_msg
 
-    smtp = Smtp.new( get_config )
+    smtp = Smtp.new( @engine, get_config )
     smtp.send msg
   end
 

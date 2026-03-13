@@ -12,7 +12,8 @@ class Smtp
   # 
   # Initialize a new SMTP email sender.
   # 
-  def initialize( config )
+  def initialize( engine, config )
+    @engine = engine
     @config = config
   end
 
@@ -23,12 +24,10 @@ class Smtp
     begin
       configure
       mail = msg.get_mail
-
       mail.deliver!
-      puts "Email sent successfully!"
-    rescue => e
-      puts "Failed to send email:"
-      puts e.message
+      @engine.log.info "Email sent successfully!"
+    rescue => ex
+      @engine.log_exception ex
     end
   end
 
