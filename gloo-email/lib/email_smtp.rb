@@ -1,6 +1,10 @@
 #
 # An email SMTP configuration object
 #
+require 'config'
+require 'msg'
+require 'smtp'
+
 class EmailSmtp < Gloo::Core::Obj
 
   KEYWORD = 'email_smtp'.freeze
@@ -86,7 +90,30 @@ class EmailSmtp < Gloo::Core::Obj
   # Get a list of message names that this object receives.
   #
   def self.messages
-    return super # + [ 'run' ]
+    return super + [ 'send' ]
+  end
+
+  #
+  # Send an email.
+  #
+  def msg_send
+    to = "eric.crane@mac.com"
+    from = "eric.n.crane@gmail.com"
+    subject = "Test Email from gloo"
+    body = "Woot!\n\nThis is a test email sent from gloo."
+    msg = Msg.new( to, from, subject, body )
+    puts msg
+
+    smtp = Smtp.new( get_config )
+    smtp.send msg
+  end
+
+  # 
+  # Get the configuration for this SMTP server.
+  #
+  def get_config
+    config = Config.new( server, port, username, password )
+    return config
   end
 
 end

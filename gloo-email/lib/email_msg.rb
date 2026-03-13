@@ -8,7 +8,7 @@ class EmailMsg < Gloo::Core::Obj
   BODY = 'body'.freeze
   TO = 'to'.freeze
   FROM = 'from'.freeze
-
+  WHEN = 'when'.freeze
 
   #
   # The name of the object type.
@@ -65,7 +65,7 @@ class EmailMsg < Gloo::Core::Obj
   # Get a list of message names that this object receives.
   #
   def self.messages
-    return super # + [ 'run' ]
+    return super + [ 'send' ]
   end
 
 end

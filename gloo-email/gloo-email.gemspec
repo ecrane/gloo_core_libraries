@@ -22,7 +22,10 @@ Gem::Specification.new do |spec|
     "lib/email_smtp.rb",
     "lib/email_imap.rb",
     "lib/email_msg.rb",
-    "lib/gloo-email.rb"
+    "lib/gloo-email.rb",
+    "lib/msg.rb",
+    "lib/config.rb",
+    "lib/smtp.rb"
   ]
 
   spec.require_paths = ['lib']
