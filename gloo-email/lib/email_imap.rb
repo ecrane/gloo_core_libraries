@@ -1,6 +1,9 @@
 #
 # An email IMAP object
 #
+require 'net/imap'
+require 'mail'
+
 class EmailImap < Gloo::Core::Obj
 
   KEYWORD = 'email_imap'.freeze
@@ -8,7 +11,8 @@ class EmailImap < Gloo::Core::Obj
   PORT = 'port'.freeze
   USERNAME = 'username'.freeze
   PASSWORD = 'password'.freeze
-
+  MAILBOX = 'mailbox'.freeze
+  MESSAGES = 'messages'.freeze
 
   #
   # The name of the object type.
@@ -50,6 +54,26 @@ class EmailImap < Gloo::Core::Obj
     return find_child_value PASSWORD
   end
 
+  # Get the email mailbox.
+  #
+  def mailbox
+    return find_child_value MAILBOX
+  end
+
+  # Get the email search.
+  #
+  def search
+    return find_child_value SEARCH
+  end
+
+  # Get the email mark as read.
+  #
+  def mark_as_read
+    val = find_child_value MARK_AS_READ
+    puts "Mark as read value: #{val}"
+    return val == 'true'
+  end
+
 
   # ---------------------------------------------------------------------
   #    Children
@@ -71,6 +95,8 @@ class EmailImap < Gloo::Core::Obj
     fac.create_string PORT, '', self
     fac.create_string USERNAME, '', self
     fac.create_string PASSWORD, '', self
+    fac.create_string MAILBOX, '', self
+    fac.create_can MESSAGES, self
   end
 
 
@@ -82,7 +108,52 @@ class EmailImap < Gloo::Core::Obj
   # Get a list of message names that this object receives.
   #
   def self.messages
-    return super # + [ 'run' ]
+    return super + [ 'fetch' ]
+  end
+
+  #
+  # Fetch emails from the IMAP server.
+  #
+  def msg_fetch
+    # Connect to the email server
+    imap = Net::IMAP.new(server, port, true)
+    imap.login(username, password)
+    imap.select(mailbox)
+
+    # Search for messages matching filter
+    ids = imap.search([search])
+
+    if ids.empty?
+      puts "No new messages."
+    else
+      ids.each do |msg_id|
+        raw_message = imap.fetch(msg_id, "RFC822")[0].attr["RFC822"]
+        mail = Mail.read_from_string(raw_message)
+
+        puts "------------------------"
+        puts "From: #{mail.from.join(', ')}"
+        puts "Subject: #{mail.subject}"
+        puts "Date: #{mail.date}"
+        puts "Body:"
+        puts mail.body.decoded
+        puts "------------------------"
+
+        # # Mark as seen (optional)
+        # if mark_as_read
+        #   puts "Marking message as read"
+        #   imap.store(msg_id, "+FLAGS", [:Seen])
+        # else
+        #   puts "Marking message as unread"
+        #   imap.store(msg_id, "-FLAGS", [:Seen])
+        # end
+      end
+    end
+
+    # -----------------------------
+    # CLEAN UP
+    # -----------------------------
+    imap.logout
+    imap.disconnect  
   end
 
 end
