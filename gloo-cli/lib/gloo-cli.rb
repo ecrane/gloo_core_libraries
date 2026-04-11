@@ -9,6 +9,8 @@ require 'menu'
 require 'menu_item'
 require 'prompt'
 require 'select'
+require 'shell'
+require 'shell_runner'
 
 # 
 # Registers the extension.
@@ -25,6 +27,7 @@ class CliInit < Gloo::Plugin::Base
       callback.register_obj( MenuItem )
       callback.register_obj( Prompt )
       callback.register_obj( Select )
+      callback.register_obj( Shell )
     end
 
 end

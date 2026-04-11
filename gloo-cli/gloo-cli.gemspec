@@ -25,6 +25,8 @@ Gem::Specification.new do |spec|
     "lib/menu.rb",
     "lib/menu_item.rb",
     "lib/prompt.rb",
+    "lib/shell_runner.rb",
+    "lib/shell.rb",
     "lib/select.rb"
   ]
 
