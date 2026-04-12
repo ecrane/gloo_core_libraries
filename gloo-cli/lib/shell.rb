@@ -97,11 +97,6 @@ class Shell < Gloo::Core::Obj
   def msg_start
     runner = get_runner
 
-    runner.add_command_node({
-      name: "done",
-      description: "Exit the shell", 
-      method: "cmd_quit"
-    })
     add_test_commands
     add_quit_command
 
@@ -118,16 +113,20 @@ class Shell < Gloo::Core::Obj
   #
   # Add a command to the shell.
   #
-  def add_command command
+  def add_command obj, command_data
     runner = get_runner
-    puts "Adding command: #{command.name} with pn: #{command.pn}"
-    runner.add_command_node({
-      name: command.name,
-      description: command.description,
-      method: "cmd_obj_action",
-      obj: command.pn
-    })
+    runner.add_command_node( command_data )
   end
+
+  
+  # ---------------------------------------------------------------------
+  #    Context
+  # ---------------------------------------------------------------------
+
+  def set_context key, value
+    @runner.set_context( key, value )
+  end
+
   
   # ---------------------------------------------------------------------
   #    Commands

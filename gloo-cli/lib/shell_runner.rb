@@ -56,13 +56,20 @@ class ShellRunner
   end
 
   def cmd_obj_action( obj, context )
-    puts "Object action…"
-    puts "Object: #{obj}"
     pn = Gloo::Core::Pn.new( @engine, obj )
     command = pn.resolve
     if command
       command.run_action
     end
+  end
+
+
+  # ---------------------------------------------------------------------
+  #    Context
+  # ---------------------------------------------------------------------
+
+  def set_context key, value
+    @context.set( key, value )
   end
 
 
@@ -76,6 +83,8 @@ class ShellRunner
     context.set(:tasks, ["task1", "task2"])
     context.add_to_list( :projects, "delta" )
     context.add_to_list( :tasks, "task3" )
+
+    context.list_all
   end
 
   def cmd_projects( obj, context )

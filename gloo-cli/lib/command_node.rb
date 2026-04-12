@@ -10,7 +10,6 @@ class CommandNode
   attr_reader :name, :description, :method, :obj
 
   def initialize( name, description: "", method: nil, obj: nil, &children_block )
-    puts "Creating command node: #{name} with obj: #{obj}"
     @name = name
     @description = description
     @method = method

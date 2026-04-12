@@ -10,6 +10,12 @@ class Command < Gloo::Core::Obj
   KEYWORD_SHORT = 'command'.freeze
   DESCRIPTION = 'description'.freeze
   ACTION = 'action'.freeze
+  DYNAMIC = 'dynamic'.freeze
+  NODES = 'nodes'.freeze
+
+  CONTEXT = 'context'.freeze
+  OPTIONS = 'options'.freeze
+  OPTIONS_KEY = 'options_key'.freeze
 
   #
   # The name of the object type.
@@ -36,6 +42,60 @@ class Command < Gloo::Core::Obj
   end
 
   # 
+  # Is this a dynamic command?
+  # It is dynamic if there is a dynamic child.
+  # If so, it has contextual data.
+  # 
+  def dynamic?
+    o = find_child DYNAMIC
+    return true if o
+    return false
+  end
+
+  # 
+  # Get the dynamic key for this command.
+  # 
+  def dynamic_key
+    o = find_child DYNAMIC
+    return o ? o.value : nil
+  end
+
+  def context
+    o = find_child CONTEXT
+    return o ? o : nil
+  end
+
+  #
+  # Get the options key for this command.
+  #
+  def options_key
+    o = find_child OPTIONS_KEY
+    return o ? o.value : nil
+  end
+
+  #
+  # Get the options for this command.
+  #
+  def options
+    arr = []
+    o = find_child OPTIONS
+
+    if o
+      arr = o.children.map { |child| child.value }
+    end
+
+    return arr
+  end
+
+  # 
+  # Get the child nodes for this command.
+  # 
+  def nodes
+    o = find_child NODES
+    return o ? o : nil
+  end
+
+  # 
   # Run the action script.
   #
   def run_action
@@ -44,6 +104,7 @@ class Command < Gloo::Core::Obj
 
     Gloo::Exec::Dispatch.message( @engine, 'run', o )
   end
+
 
   # ---------------------------------------------------------------------
   #    Children
@@ -89,7 +150,12 @@ class Command < Gloo::Core::Obj
     if @params&.token_count&.positive?
       pn = Gloo::Core::Pn.new( @engine, @params.first )
       shell = pn.resolve
-      shell.add_command self
+      shell.add_command( self, get_command_data )
+
+      # Are there options to add?
+      if options_key
+        shell.set_context( options_key, options )
+      end
     end
   end
 
@@ -98,5 +164,42 @@ class Command < Gloo::Core::Obj
   #    Helpers
   # ---------------------------------------------------------------------
 
+  # 
+  # Get the child nodes for this command.
+  # 
+  def get_child_nodes
+    data = nodes.children.map do |child|
+      child.get_command_data
+    end
+
+    return data
+  end
+
+  # 
+  # Get the command data for this command.
+  # 
+  def get_command_data
+    if dynamic?
+      return {
+        name: name,
+        description: description,
+        dynamic: true,
+        source: dynamic_key
+      }
+    elsif nodes
+      return {
+        name: name,
+        description: description,
+        children: get_child_nodes
+      }
+    else
+      return {
+        name: name,
+        description: description,
+        method: "cmd_obj_action",
+        obj: pn
+      }
+    end
+  end
 
 end
