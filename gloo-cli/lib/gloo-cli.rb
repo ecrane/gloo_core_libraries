@@ -13,6 +13,7 @@ require 'shell'
 require 'shell_runner'
 require 'shell_context'
 require 'command_node'
+require 'command'
 
 # 
 # Registers the extension.
@@ -30,6 +31,7 @@ class CliInit < Gloo::Plugin::Base
       callback.register_obj( Prompt )
       callback.register_obj( Select )
       callback.register_obj( Shell )
+      callback.register_obj( Command )
     end
 
 end

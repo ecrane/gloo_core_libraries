@@ -28,6 +28,7 @@ Gem::Specification.new do |spec|
     "lib/shell_runner.rb",
     "lib/shell.rb",
     "lib/shell_context.rb",
+    "lib/command.rb",
     "lib/command_node.rb",
     "lib/select.rb"
   ]

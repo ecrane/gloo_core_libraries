@@ -13,7 +13,8 @@ class ShellRunner
   # 
   # @param obj [Object] The shell obj.
   # 
-  def initialize( obj )
+  def initialize( engine, obj )
+    @engine = engine
     @obj = obj
     @context = ShellContext.new
     @root = CommandNode.new( nil )
@@ -28,7 +29,6 @@ class ShellRunner
   # Start the shell.
   # 
   def start
-    build_command_tree
     repl
   end
 
@@ -50,9 +50,19 @@ class ShellRunner
   # 
   # Quit the shell.
   # 
-  def cmd_quit(context)
+  def cmd_quit( obj, context )
     puts "Quitting…"
     context.done = true
+  end
+
+  def cmd_obj_action( obj, context )
+    puts "Object action…"
+    puts "Object: #{obj}"
+    pn = Gloo::Core::Pn.new( @engine, obj )
+    command = pn.resolve
+    if command
+      command.run_action
+    end
   end
 
 
@@ -60,24 +70,27 @@ class ShellRunner
   #    Tree building
   # ---------------------------------------------------------------------
 
-  def cmd_add(context)
+  def cmd_add( obj, context )
     puts "Adding project…"
-    context.projects << "X"
+    context.set(:projects, ["alpha", "beta", "gamma"])
+    context.set(:tasks, ["task1", "task2"])
+    context.add_to_list( :projects, "delta" )
+    context.add_to_list( :tasks, "task3" )
   end
 
-  def cmd_projects(context)
+  def cmd_projects( obj, context )
     puts "Listing projects…"
     context.projects.each { |proj| puts "  - #{proj}" }
   end
 
-  def cmd_tasks(context)
+  def cmd_tasks( obj, context )
     puts "Listing tasks…"
     context.tasks.each { |task| puts "  - #{task}" }
   end
 
   def execute_command( command_node, args )
     if command_node.respond_to?( :method ) && command_node.method
-      send( command_node.method, @context )
+      send( command_node.method, command_node.obj, @context )
     else
       if command_node.name && command_node.name != "" && !command_node.description.empty?
         puts "#{command_node.description}: #{command_node.name}"
@@ -88,78 +101,21 @@ class ShellRunner
   end
 
 
-  def command_data
-    [
-      {
-        name: "add",
-        description: "add a project",
-        method: "cmd_add"
-      },
-      {
-        name: "list",
-        description: "List resources",
-        children: [
-          {
-            name: "projects",
-            description: "List projects",
-            method: "cmd_projects"
-          },
-          {
-            name: "tasks",
-            description: "List tasks",
-            method: "cmd_tasks"
-          }
-        ]
-      },
-      {
-        name: "show",
-        description: "Show a resource",
-        children: [
-          {
-            name: "project",
-            description: "Show a project",
-            dynamic: true,
-            source: "projects"
-          },
-          {
-            name: "task",
-            description: "Show a task",
-            dynamic: true,
-            source: "tasks"
-          }
-        ]
-      },
-      {
-        name: "quit",
-        description: "Quit the application",
-        method: "cmd_quit"
-      }
-    ]
-  end
-
-
   def build_node_from_data( data )
     if data[:dynamic]
-      CommandNode.new(data[:name], description: data[:description]) do |ctx|
+      CommandNode.new(data[:name], description: data[:description], obj: data[:obj]) do |ctx|
         ctx.send(data[:source]).map do |item|
           CommandNode.new(item)
         end
       end
     elsif data[:children]
-      CommandNode.new(data[:name], description: data[:description], method: data[:method]) do |ctx|
+      CommandNode.new(data[:name], description: data[:description], method: data[:method], obj: data[:obj]) do |ctx|
         data[:children].map { |child_data| build_node_from_data(child_data) }
       end
     else
-      CommandNode.new(data[:name], description: data[:description], method: data[:method])
+      CommandNode.new(data[:name], description: data[:description], method: data[:method], obj: data[:obj])
     end
   end
-
-
-  # def build_tree
-  #   CommandNode.new(nil) do |ctx|
-  #     command_data.map { |data| build_node_from_data( data ) }
-  #   end
-  # end
 
   # 
   # Add a command node to the root dynamically
@@ -202,13 +158,6 @@ class ShellRunner
     end
     
     node
-  end
-
-  # 
-  # Build the command tree by adding command nodes to the root
-  # 
-  def build_command_tree
-    command_data.each { |data| add_command_node(data) }
   end
 
 
