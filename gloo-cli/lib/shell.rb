@@ -29,7 +29,7 @@ class Shell < Gloo::Core::Obj
   # Get the value of the prompt child object.
   # Returns nil if there is none.
   #
-  def prompt_value
+  def prompt
     o = find_child PROMPT
     return '' unless o
 
@@ -70,13 +70,22 @@ class Shell < Gloo::Core::Obj
   # Get a list of message names that this object receives.
   #
   def self.messages
-    return super + [ 'run' ]
+    return super + [ 'start', 'stop' ]
   end
 
   #
-  # Run the CLI shell.
+  # Start the shell.
   #
-  def msg_run
+  def msg_start
+    @runner = ShellRunner.new( self )
+    @runner.start
+  end
+
+  #
+  # Stop the shell.
+  #
+  def msg_stop
+    @runner.stop if @runner
   end
 
 end

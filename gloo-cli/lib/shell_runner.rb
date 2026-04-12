@@ -30,35 +30,65 @@ class Context
 
 end
 
-# 
-# Get the prompt string
-# 
-def prompt
-  return " -> "
-end
 
-
+# 
 # Author::    Eric Crane  (mailto:eric.crane@mac.com)
 # Copyright:: Copyright (c) 2026 Eric Crane.  All rights reserved.
 #
-# A CLI shell.
+# A shell runner.
 #
+class ShellRunner
 
-class Shell < Gloo::Core::Obj
-
-  def run
-    context = Context.new
-
-    root = build_tree
-
-    repl(root, context)
+  # 
+  # Initialize the shell runner
+  # 
+  # @param obj [Object] The shell obj.
+  # 
+  def initialize( obj )
+    @obj = obj
+    @context = Context.new
   end
 
+  # ---------------------------------------------------------------------
+  #    Shell, control, start and stop
+  # ---------------------------------------------------------------------
+  
+  # 
+  # Start the shell.
+  # 
+  def start
+    root = build_tree
 
+    repl( root )
+  end
+
+  # 
+  # Flag the shell as done, next time through the loop it will stop
+  # 
+  def stop
+    done = true
+  end
+  
+  # 
+  # Get the prompt string
+  # 
+  def prompt
+    p = @obj.prompt 
+    return p ? p + ' ' : " -> "
+  end
+
+  # 
+  # Quit the shell.
+  # 
   def cmd_quit(context)
     puts "Quitting…"
     context.done = true
   end
+
+
+  # ---------------------------------------------------------------------
+  #    Tree building
+  # ---------------------------------------------------------------------
 
   def cmd_add(context)
     puts "Adding project…"
@@ -75,9 +105,9 @@ class Shell < Gloo::Core::Obj
     context.tasks.each { |task| puts "  - #{task}" }
   end
 
-  def execute_command(command_node, context, args)
-    if command_node.respond_to?(:method) && command_node.method
-      send(command_node.method, context)
+  def execute_command( command_node, args )
+    if command_node.respond_to?( :method ) && command_node.method
+      send( command_node.method, @context )
     else
       if command_node.name && command_node.name != "" && !command_node.description.empty?
         puts "#{command_node.description}: #{command_node.name}"
@@ -138,7 +168,7 @@ class Shell < Gloo::Core::Obj
   end
 
 
-  def build_node_from_data(data)
+  def build_node_from_data( data )
     if data[:dynamic]
       CommandNode.new(data[:name], description: data[:description]) do |ctx|
         ctx.send(data[:source]).map do |item|
@@ -157,17 +187,20 @@ class Shell < Gloo::Core::Obj
 
   def build_tree
     CommandNode.new(nil) do |ctx|
-      command_data.map { |data| build_node_from_data(data) }
+      command_data.map { |data| build_node_from_data( data ) }
     end
   end
 
 
+  # ---------------------------------------------------------------------
+  #    REPL
+  # ---------------------------------------------------------------------
 
-  def traverse(node, tokens, context)
+  def traverse( node, tokens )
     current = node
 
     tokens.each do |token|
-      children = current.children(context)
+      children = current.children( @context )
       match = children.find { |c| c.name == token }
       return nil unless match
       current = match
@@ -176,7 +209,7 @@ class Shell < Gloo::Core::Obj
     current
   end
 
-  def setup_completion(root, context)
+  def setup_completion( root )
     Readline.completion_append_character = " "
     Readline.basic_word_break_characters = " \t\n\"\\'`@$><=;|&{("
 
@@ -186,15 +219,15 @@ class Shell < Gloo::Core::Obj
 
       tokens << "" if buffer.end_with?(" ")
 
-      current = traverse(root, tokens[0..-2], context)
-      options = current.children(context).map(&:name)
+      current = traverse( root, tokens[0..-2] )
+      options = current.children( @context ).map( &:name )
 
       matches = options.grep(/^#{Regexp.escape(input)}/)
 
       if matches.length > 1
         puts
-        current.children(context).each do |child|
-          if matches.include?(child.name)
+        current.children( @context ).each do |child|
+          if matches.include?( child.name )
             puts "#{child.name.ljust(15)} #{child.description}"
           end
         end
@@ -206,17 +239,17 @@ class Shell < Gloo::Core::Obj
   end
 
 
-  def repl(root, context)
-    setup_completion(root, context)
+  def repl( root )
+    setup_completion( root )
 
-    while ( !context.done && (line = Readline.readline(prompt, true)) )
+    while ( ! @context.done && (line = Readline.readline(prompt, true)) )
       tokens = line.strip.split(" ")
       next if tokens.empty?
 
-      node = traverse(root, tokens, context)
+      node = traverse( root, tokens )
 
       if node
-        execute_command(node, context, tokens)
+        execute_command( node, tokens )
       else
         puts "Unknown command"
       end
