@@ -8,6 +8,7 @@ require "readline"
 
 class ShellRunner
 
+  DEFAULT_PROMPT = " -> "
   # 
   # Initialize the shell runner
   # 
@@ -44,7 +45,7 @@ class ShellRunner
   # 
   def prompt
     p = @obj.prompt 
-    return p ? p + ' ' : " -> "
+    return p ? p + ' ' : DEFAULT_PROMPT
   end
 
   # 
@@ -55,6 +56,9 @@ class ShellRunner
     context.done = true
   end
 
+  # 
+  # Run an action on an object.
+  # 
   def cmd_obj_action( obj, context )
     pn = Gloo::Core::Pn.new( @engine, obj )
     command = pn.resolve
@@ -63,13 +67,34 @@ class ShellRunner
     end
   end
 
+  def cmd_obj_action_with_context( cmd_node, parent_node = nil )
+    puts "Showing Command Node: #{cmd_node.name}"
+    puts "cmd_node.obj: #{cmd_node.obj}"
+    puts "cmd_node.method: #{cmd_node.method}"
+    puts "cmd_node.description: #{cmd_node.description}"
+    
+    if parent_node
+      puts "Parent Command Node: #{parent_node.name}"
+      puts "Parent Description: #{parent_node.description}"
+    end
+
+    pn = Gloo::Core::Pn.new( @engine, cmd_node.obj )
+    command = pn.resolve
+    if command
+      command.run_action_with_context( @context, parent_node )
+    end
+  end
+
 
   # ---------------------------------------------------------------------
   #    Context
   # ---------------------------------------------------------------------
 
-  def set_context key, value
-    @context.set( key, value )
+  # 
+  # Set a context list.
+  # 
+  def set_context key, value_list
+    @context.set( key, value_list )
   end
 
 
@@ -77,39 +102,46 @@ class ShellRunner
   #    Tree building
   # ---------------------------------------------------------------------
 
-  def cmd_add( obj, context )
-    puts "Adding project…"
-    context.set(:projects, ["alpha", "beta", "gamma"])
-    context.set(:tasks, ["task1", "task2"])
-    context.add_to_list( :projects, "delta" )
-    context.add_to_list( :tasks, "task3" )
+  # def cmd_add( obj, context )
+  #   puts "Adding project…"
+  #   context.set(:projects, ["alpha", "beta", "gamma"])
+  #   context.set(:tasks, ["task1", "task2"])
+  #   context.add_to_list( :projects, "delta" )
+  #   context.add_to_list( :tasks, "task3" )
 
-    context.list_all
-  end
+  #   context.list_all
+  # end
 
-  def cmd_projects( obj, context )
-    puts "Listing projects…"
-    context.projects.each { |proj| puts "  - #{proj}" }
-  end
+  # def cmd_projects( obj, context )
+  #   puts "Listing projects…"
+  #   context.projects.each { |proj| puts "  - #{proj}" }
+  # end
 
-  def cmd_tasks( obj, context )
-    puts "Listing tasks…"
-    context.tasks.each { |task| puts "  - #{task}" }
-  end
+  # def cmd_tasks( obj, context )
+  #   puts "Listing tasks…"
+  #   context.tasks.each { |task| puts "  - #{task}" }
+  # end
 
-  def execute_command( command_node, args )
+  # 
+  # Execute a command.
+  # 
+  def execute_command( command_node, args, parent_node = nil )
     if command_node.respond_to?( :method ) && command_node.method
       send( command_node.method, command_node.obj, @context )
     else
       if command_node.name && command_node.name != "" && !command_node.description.empty?
         puts "#{command_node.description}: #{command_node.name}"
       elsif command_node.name
-        puts "Showing: #{command_node.name}"
+        # puts "Showing: #{command_node.name}"
+        cmd_obj_action_with_context( command_node, parent_node )
       end
     end
   end
 
 
+  # 
+  # Build a command node from data.
+  # 
   def build_node_from_data( data )
     if data[:dynamic]
       CommandNode.new(data[:name], description: data[:description], obj: data[:obj]) do |ctx|
@@ -180,19 +212,22 @@ class ShellRunner
   # @param node [CommandNode] The current node
   # @param tokens [Array<String>] The tokens to traverse
   # 
-  # @return [CommandNode] The matching node or nil
+  # @return [Hash] Hash with :node and :parent keys
   # 
   def traverse( node, tokens )
     current = node
+    parent = nil
 
     tokens.each do |token|
       children = current.children( @context )
       match = children.find { |c| c.name == token }
-      return nil unless match
+      return { node: nil, parent: nil } unless match
+      
+      parent = current
       current = match
     end
 
-    current
+    { node: current, parent: parent }
   end
 
   # 
@@ -208,7 +243,8 @@ class ShellRunner
 
       tokens << "" if buffer.end_with?(" ")
 
-      current = traverse( @root, tokens[0..-2] )
+      result = traverse( @root, tokens[0..-2] )
+      current = result[:node]
       options = current.children( @context ).map( &:name )
 
       matches = options.grep(/^#{Regexp.escape(input)}/)
@@ -238,10 +274,10 @@ class ShellRunner
       tokens = line.strip.split(" ")
       next if tokens.empty?
 
-      node = traverse( @root, tokens )
+      result = traverse( @root, tokens )
 
-      if node
-        execute_command( node, tokens )
+      if result[:node]
+        execute_command( result[:node], tokens, result[:parent] )
       else
         puts "Unknown command"
       end

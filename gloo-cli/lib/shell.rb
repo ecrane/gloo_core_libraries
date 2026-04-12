@@ -97,7 +97,7 @@ class Shell < Gloo::Core::Obj
   def msg_start
     runner = get_runner
 
-    add_test_commands
+    # add_test_commands
     add_quit_command
 
     runner.start
@@ -127,7 +127,7 @@ class Shell < Gloo::Core::Obj
     @runner.set_context( key, value )
   end
 
-  
+
   # ---------------------------------------------------------------------
   #    Commands
   # ---------------------------------------------------------------------

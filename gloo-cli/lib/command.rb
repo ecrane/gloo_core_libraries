@@ -105,6 +105,17 @@ class Command < Gloo::Core::Obj
     Gloo::Exec::Dispatch.message( @engine, 'run', o )
   end
 
+  def run_action_with_context( context, parent_node = nil )
+    o = find_child ACTION
+    return unless o
+
+    puts "CONTEXT: #{context}"
+    if parent_node
+      puts "PARENT NODE: #{parent_node.name} - #{parent_node.description}"
+    end
+    Gloo::Exec::Dispatch.message( @engine, 'run', o )
+  end
+
 
   # ---------------------------------------------------------------------
   #    Children
