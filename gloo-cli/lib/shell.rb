@@ -78,6 +78,13 @@ class Shell < Gloo::Core::Obj
   #
   def msg_start
     @runner = ShellRunner.new( self )
+
+    @runner.add_command_node({
+      name: "done",
+      description: "Exit the shell", 
+      method: "cmd_quit"
+    })
+
     @runner.start
   end
 

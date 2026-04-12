@@ -11,6 +11,8 @@ require 'prompt'
 require 'select'
 require 'shell'
 require 'shell_runner'
+require 'shell_context'
+require 'command_node'
 
 # 
 # Registers the extension.

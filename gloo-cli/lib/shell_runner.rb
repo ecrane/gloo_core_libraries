@@ -1,42 +1,11 @@
-require "readline"
-
-class CommandNode
-  attr_reader :name, :description, :method
-
-  def initialize(name, description: "", method: nil, &children_block)
-    @name = name
-    @description = description
-    @method = method
-    @children_block = children_block
-  end
-
-  def children(context)
-    return [] unless @children_block
-    @children_block.call(context)
-  end
-end
-
-
-
-class Context
-
-  attr_accessor :done
-  attr_reader :projects, :tasks
- 
-  def initialize
-    @projects = ["alpha", "beta", "gamma"]
-    @tasks = ["task1", "task2"]
-  end
-
-end
-
-
 # 
 # Author::    Eric Crane  (mailto:eric.crane@mac.com)
 # Copyright:: Copyright (c) 2026 Eric Crane.  All rights reserved.
 #
 # A shell runner.
 #
+require "readline"
+
 class ShellRunner
 
   # 
@@ -46,8 +15,10 @@ class ShellRunner
   # 
   def initialize( obj )
     @obj = obj
-    @context = Context.new
+    @context = ShellContext.new
+    @root = CommandNode.new( nil )
   end
+
 
   # ---------------------------------------------------------------------
   #    Shell, control, start and stop
@@ -57,16 +28,15 @@ class ShellRunner
   # Start the shell.
   # 
   def start
-    root = build_tree
-
-    repl( root )
+    build_command_tree
+    repl
   end
 
   # 
   # Flag the shell as done, next time through the loop it will stop
   # 
   def stop
-    done = true
+    @context.done = true
   end
   
   # 
@@ -185,10 +155,60 @@ class ShellRunner
   end
 
 
-  def build_tree
-    CommandNode.new(nil) do |ctx|
-      command_data.map { |data| build_node_from_data( data ) }
+  # def build_tree
+  #   CommandNode.new(nil) do |ctx|
+  #     command_data.map { |data| build_node_from_data( data ) }
+  #   end
+  # end
+
+  # 
+  # Add a command node to the root dynamically
+  # 
+  # @param command_data [Hash] The command data hash
+  # 
+  # Add a single command dynamically
+  # 
+  # Example:
+  # 
+  # shell_runner.add_command_node({
+  #   name: "status",
+  #   description: "Show system status", 
+  #   method: "cmd_status"
+  # })
+  # 
+  # # Add a command with children
+  # shell_runner.add_command_node({
+  #   name: "admin",
+  #   description: "Administration commands",
+  #   children: [
+  #     { name: "users", description: "Manage users", method: "cmd_admin_users" }
+  #   ]
+  # })
+  # 
+  def add_command_node( command_data)
+    node = build_node_from_data(command_data)
+    
+    # Get existing children block or create new one
+    existing_block = @root.instance_variable_get(:@children_block)
+    
+    if existing_block
+      # Store existing nodes and add new one
+      existing_nodes = existing_block.call(@context)
+      all_nodes = existing_nodes + [node]
+      @root.instance_variable_set(:@children_block, proc { |ctx| all_nodes })
+    else
+      # Create new children block with just this node
+      @root.instance_variable_set(:@children_block, proc { |ctx| [node] })
     end
+    
+    node
+  end
+
+  # 
+  # Build the command tree by adding command nodes to the root
+  # 
+  def build_command_tree
+    command_data.each { |data| add_command_node(data) }
   end
 
 
@@ -196,6 +216,14 @@ class ShellRunner
   #    REPL
   # ---------------------------------------------------------------------
 
+  # 
+  # Traverse the command tree to find the matching node
+  # 
+  # @param node [CommandNode] The current node
+  # @param tokens [Array<String>] The tokens to traverse
+  # 
+  # @return [CommandNode] The matching node or nil
+  # 
   def traverse( node, tokens )
     current = node
 
@@ -209,7 +237,10 @@ class ShellRunner
     current
   end
 
-  def setup_completion( root )
+  # 
+  # Setup readline completion
+  # 
+  def setup_completion
     Readline.completion_append_character = " "
     Readline.basic_word_break_characters = " \t\n\"\\'`@$><=;|&{("
 
@@ -219,7 +250,7 @@ class ShellRunner
 
       tokens << "" if buffer.end_with?(" ")
 
-      current = traverse( root, tokens[0..-2] )
+      current = traverse( @root, tokens[0..-2] )
       options = current.children( @context ).map( &:name )
 
       matches = options.grep(/^#{Regexp.escape(input)}/)
@@ -239,14 +270,17 @@ class ShellRunner
   end
 
 
-  def repl( root )
-    setup_completion( root )
+  # 
+  # Run the REPL loop.
+  # 
+  def repl
+    setup_completion
 
     while ( ! @context.done && (line = Readline.readline(prompt, true)) )
       tokens = line.strip.split(" ")
       next if tokens.empty?
 
-      node = traverse( root, tokens )
+      node = traverse( @root, tokens )
 
       if node
         execute_command( node, tokens )
