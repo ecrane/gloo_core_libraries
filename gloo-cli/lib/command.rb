@@ -105,14 +105,13 @@ class Command < Gloo::Core::Obj
     Gloo::Exec::Dispatch.message( @engine, 'run', o )
   end
 
-  def run_action_with_context( context, parent_node = nil )
+  def run_action_with_context( context )
     o = find_child ACTION
     return unless o
 
-    puts "CONTEXT: #{context}"
-    if parent_node
-      puts "PARENT NODE: #{parent_node.name} - #{parent_node.description}"
-    end
+    ctx = find_child CONTEXT
+    ctx.set_value( context ) if ctx
+    
     Gloo::Exec::Dispatch.message( @engine, 'run', o )
   end
 
@@ -195,6 +194,8 @@ class Command < Gloo::Core::Obj
         name: name,
         description: description,
         dynamic: true,
+        obj: pn,
+        method: "cmd_obj_action_with_context",
         source: dynamic_key
       }
     elsif nodes

@@ -17,13 +17,6 @@ class ShellContext
     @properties = {}
   end
 
-
-  def list_all
-    @properties.each do |key, value|
-      puts "#{key}: #{value}"
-    end
-  end
-
   # 
   # Get a property value
   # 

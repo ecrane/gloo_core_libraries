@@ -145,48 +145,48 @@ class Shell < Gloo::Core::Obj
     })
   end
 
-  def add_test_commands
-    @runner.add_command_node({
-      name: "add",
-      description: "add a project",
-      method: "cmd_add"
-    })
+  # def add_test_commands
+  #   @runner.add_command_node({
+  #     name: "add",
+  #     description: "add a project",
+  #     method: "cmd_add"
+  #   })
 
-    @runner.add_command_node({
-      name: "show",
-      description: "show a resource",
-      children: [
-        {
-          name: "project",
-          description: "show a project",
-          dynamic: true,
-          source: "projects"
-        },
-        {
-          name: "task",
-          description: "show a task",
-          dynamic: true,
-          source: "tasks"
-        }
-      ]
-    })
+  #   @runner.add_command_node({
+  #     name: "show",
+  #     description: "show a resource",
+  #     children: [
+  #       {
+  #         name: "project",
+  #         description: "show a project",
+  #         dynamic: true,
+  #         source: "projects"
+  #       },
+  #       {
+  #         name: "task",
+  #         description: "show a task",
+  #         dynamic: true,
+  #         source: "tasks"
+  #       }
+  #     ]
+  #   })
 
-    @runner.add_command_node({
-      name: "list",
-      description: "list resources",
-      children: [
-        {
-          name: "projects",
-          description: "list projects",
-          method: "cmd_projects"
-        },
-        {
-          name: "tasks",
-          description: "list tasks",
-          method: "cmd_tasks"
-        }
-      ]
-    })
-  end
+  #   @runner.add_command_node({
+  #     name: "list",
+  #     description: "list resources",
+  #     children: [
+  #       {
+  #         name: "projects",
+  #         description: "list projects",
+  #         method: "cmd_projects"
+  #       },
+  #       {
+  #         name: "tasks",
+  #         description: "list tasks",
+  #         method: "cmd_tasks"
+  #       }
+  #     ]
+  #   })
+  # end
 
 end

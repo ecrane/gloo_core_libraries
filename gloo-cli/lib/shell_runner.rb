@@ -67,22 +67,15 @@ class ShellRunner
     end
   end
 
-  def cmd_obj_action_with_context( cmd_node, parent_node = nil )
-    puts "Showing Command Node: #{cmd_node.name}"
-    puts "cmd_node.obj: #{cmd_node.obj}"
-    puts "cmd_node.method: #{cmd_node.method}"
-    puts "cmd_node.description: #{cmd_node.description}"
-    
+  def cmd_obj_action_with_context( cmd_node, parent_node = nil )    
     if parent_node
-      puts "Parent Command Node: #{parent_node.name}"
-      puts "Parent Description: #{parent_node.description}"
+      pn = Gloo::Core::Pn.new( @engine, parent_node.obj )
+      command = pn.resolve
+      if command
+        command.run_action_with_context( cmd_node.name )
+      end
     end
 
-    pn = Gloo::Core::Pn.new( @engine, cmd_node.obj )
-    command = pn.resolve
-    if command
-      command.run_action_with_context( @context, parent_node )
-    end
   end
 
 
@@ -101,26 +94,6 @@ class ShellRunner
   # ---------------------------------------------------------------------
   #    Tree building
   # ---------------------------------------------------------------------
-
-  # def cmd_add( obj, context )
-  #   puts "Adding project…"
-  #   context.set(:projects, ["alpha", "beta", "gamma"])
-  #   context.set(:tasks, ["task1", "task2"])
-  #   context.add_to_list( :projects, "delta" )
-  #   context.add_to_list( :tasks, "task3" )
-
-  #   context.list_all
-  # end
-
-  # def cmd_projects( obj, context )
-  #   puts "Listing projects…"
-  #   context.projects.each { |proj| puts "  - #{proj}" }
-  # end
-
-  # def cmd_tasks( obj, context )
-  #   puts "Listing tasks…"
-  #   context.tasks.each { |task| puts "  - #{task}" }
-  # end
 
   # 
   # Execute a command.
@@ -164,23 +137,6 @@ class ShellRunner
   # @param command_data [Hash] The command data hash
   # 
   # Add a single command dynamically
-  # 
-  # Example:
-  # 
-  # shell_runner.add_command_node({
-  #   name: "status",
-  #   description: "Show system status", 
-  #   method: "cmd_status"
-  # })
-  # 
-  # # Add a command with children
-  # shell_runner.add_command_node({
-  #   name: "admin",
-  #   description: "Administration commands",
-  #   children: [
-  #     { name: "users", description: "Manage users", method: "cmd_admin_users" }
-  #   ]
-  # })
   # 
   def add_command_node( command_data)
     node = build_node_from_data(command_data)
