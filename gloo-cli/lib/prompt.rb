@@ -10,6 +10,7 @@ class Prompt < Gloo::Core::Obj
   KEYWORD_SHORT = 'ask'.freeze
   PROMPT = 'prompt'.freeze
   RESULT = 'result'.freeze
+  DEFAULT = 'default'.freeze
 
   #
   # The name of the object type.
@@ -36,6 +37,19 @@ class Prompt < Gloo::Core::Obj
     return o.value
   end
 
+  # 
+  # Get the default value.
+  # This is an optional field.
+  # If present, it starts the prompt with the default value.
+  # Returns nil if there is none.
+  #
+  def default_value
+    o = find_child DEFAULT
+    return nil unless o
+
+    return o.value
+  end
+
   #
   # Set the result of the system call.
   #
@@ -45,6 +59,7 @@ class Prompt < Gloo::Core::Obj
 
     r.set_value data
   end
+
 
   # ---------------------------------------------------------------------
   #    Children
@@ -69,6 +84,7 @@ class Prompt < Gloo::Core::Obj
     fac.create_string PROMPT, '>', self
     fac.create_string RESULT, nil, self
   end
+
 
   # ---------------------------------------------------------------------
   #    Messages
@@ -99,7 +115,7 @@ class Prompt < Gloo::Core::Obj
     prompt = prompt_value
     return unless prompt
 
-    result = @engine.platform.prompt.ask( prompt )
+    result = @engine.platform.prompt.ask( prompt, default_value )
     set_result result
   end
 
