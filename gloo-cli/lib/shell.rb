@@ -12,6 +12,7 @@ class Shell < Gloo::Core::Obj
   DEFAULT_ACTION = 'default_action'.freeze
   INCLUDE_QUIT = 'include_quit'.freeze
   ON_ERROR = 'on_error'.freeze
+  ON_UNKNOWN_CMD = 'on_unknown_command'.freeze
 
   #
   # The name of the object type.
@@ -134,6 +135,18 @@ class Shell < Gloo::Core::Obj
   #
   def run_on_error
     o = find_child ON_ERROR
+    return false unless o
+
+    Gloo::Exec::Dispatch.message( @engine, 'run', o )
+    return true
+  end
+
+  #
+  # Run the on_unknown_cmd script if one exists.
+  # Returns true if the script was found and run, false otherwise.
+  #
+  def run_on_unknown_cmd
+    o = find_child ON_UNKNOWN_CMD
     return false unless o
 
     Gloo::Exec::Dispatch.message( @engine, 'run', o )

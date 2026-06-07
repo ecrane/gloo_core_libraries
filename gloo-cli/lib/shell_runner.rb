@@ -9,6 +9,8 @@ require "readline"
 class ShellRunner
 
   DEFAULT_PROMPT = " -> "
+  UNKNOWN_COMMAND = "Unknown command".freeze
+  
   # 
   # Initialize the shell runner
   # 
@@ -48,9 +50,16 @@ class ShellRunner
     return p ? p + ' ' : DEFAULT_PROMPT
   end
 
-  # 
+  #
+  # Handle an unknown command — run on_unknown_cmd if defined, otherwise show default message.
+  #
+  def handle_unknown_command
+    @obj.run_on_unknown_cmd || puts( UNKNOWN_COMMAND )
+  end
+
+  #
   # Quit the shell.
-  # 
+  #
   def cmd_quit( obj, context )
     puts "Quitting…"
     context.done = true
@@ -241,7 +250,7 @@ class ShellRunner
       if result[:node]
         execute_command( result[:node], tokens, result[:parent] )
       else
-        puts "Unknown command"
+        handle_unknown_command
       end
     end
   end
