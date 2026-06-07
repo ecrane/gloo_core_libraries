@@ -67,15 +67,21 @@ class ShellRunner
     end
   end
 
-  def cmd_obj_action_with_context( cmd_node, parent_node = nil )    
+  #
+  # Run an action on an object with context.
+  #
+  def cmd_obj_action_with_context( cmd_node, parent_node = nil )
     if parent_node
       pn = Gloo::Core::Pn.new( @engine, parent_node.obj )
       command = pn.resolve
       if command
-        command.run_action_with_context( cmd_node.name )
+        begin
+          command.run_action_with_context( cmd_node.name )
+        rescue => e
+          command.run_on_error || @obj.run_on_error
+        end
       end
     end
-
   end
 
 

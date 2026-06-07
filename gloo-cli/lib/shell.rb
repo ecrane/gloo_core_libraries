@@ -11,6 +11,7 @@ class Shell < Gloo::Core::Obj
   PROMPT = 'prompt'.freeze
   DEFAULT_ACTION = 'default_action'.freeze
   INCLUDE_QUIT = 'include_quit'.freeze
+  ON_ERROR = 'on_error'.freeze
 
   #
   # The name of the object type.
@@ -127,6 +128,18 @@ class Shell < Gloo::Core::Obj
     @runner.set_context( key, value )
   end
 
+  #
+  # Run the on_error script if one exists.
+  # Returns true if the script was found and run, false otherwise.
+  #
+  def run_on_error
+    o = find_child ON_ERROR
+    return false unless o
+
+    Gloo::Exec::Dispatch.message( @engine, 'run', o )
+    return true
+  end
+
 
   # ---------------------------------------------------------------------
   #    Commands
@@ -144,49 +157,5 @@ class Shell < Gloo::Core::Obj
       method: "cmd_quit"
     })
   end
-
-  # def add_test_commands
-  #   @runner.add_command_node({
-  #     name: "add",
-  #     description: "add a project",
-  #     method: "cmd_add"
-  #   })
-
-  #   @runner.add_command_node({
-  #     name: "show",
-  #     description: "show a resource",
-  #     children: [
-  #       {
-  #         name: "project",
-  #         description: "show a project",
-  #         dynamic: true,
-  #         source: "projects"
-  #       },
-  #       {
-  #         name: "task",
-  #         description: "show a task",
-  #         dynamic: true,
-  #         source: "tasks"
-  #       }
-  #     ]
-  #   })
-
-  #   @runner.add_command_node({
-  #     name: "list",
-  #     description: "list resources",
-  #     children: [
-  #       {
-  #         name: "projects",
-  #         description: "list projects",
-  #         method: "cmd_projects"
-  #       },
-  #       {
-  #         name: "tasks",
-  #         description: "list tasks",
-  #         method: "cmd_tasks"
-  #       }
-  #     ]
-  #   })
-  # end
 
 end

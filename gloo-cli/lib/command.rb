@@ -8,6 +8,7 @@ class Command < Gloo::Core::Obj
 
   KEYWORD = 'command'.freeze
   KEYWORD_SHORT = 'command'.freeze
+  NAME = 'name'.freeze
   DESCRIPTION = 'description'.freeze
   ACTION = 'action'.freeze
   DYNAMIC = 'dynamic'.freeze
@@ -16,6 +17,7 @@ class Command < Gloo::Core::Obj
   CONTEXT = 'context'.freeze
   OPTIONS = 'options'.freeze
   OPTIONS_KEY = 'options_key'.freeze
+  ON_ERROR = 'on_error'.freeze
 
   #
   # The name of the object type.
@@ -105,14 +107,29 @@ class Command < Gloo::Core::Obj
     Gloo::Exec::Dispatch.message( @engine, 'run', o )
   end
 
+  #
+  # Run the action script with context.
+  #
   def run_action_with_context( context )
     o = find_child ACTION
     return unless o
 
     ctx = find_child CONTEXT
     ctx.set_value( context ) if ctx
-    
+
     Gloo::Exec::Dispatch.message( @engine, 'run', o )
+  end
+
+  #
+  # Run the on_error script if one exists.
+  # Returns true if the script was found and run, false otherwise.
+  #
+  def run_on_error
+    o = find_child ON_ERROR
+    return false unless o
+
+    Gloo::Exec::Dispatch.message( @engine, 'run', o )
+    return true
   end
 
 

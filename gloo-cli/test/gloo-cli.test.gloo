@@ -29,6 +29,12 @@ tests [can] :
           exists? object prompt
           assert "expected the prompt object exist"
 
+          exists? object shell
+          assert "expected the shell object exist"
+
+          exists? object command
+          assert "expected the command object exist"
+
       run_msgs [test] :
         description [string] : confirm that objects can be run
         on_test [script] :
@@ -39,3 +45,17 @@ tests [can] :
           create tests.gloo-cli.lib_objects.c as confirm
           check ^^.c for responds_to? ('run')
           assert "expected to run a confirmation"
+
+      shell_msgs [test] :
+        description [string] : confirm that shell and command respond to their messages
+        on_test [script] :
+          create tests.gloo-cli.lib_objects.s as shell
+          check ^^.s for responds_to? ('start')
+          assert "expected shell to respond to start"
+
+          check ^^.s for responds_to? ('stop')
+          assert "expected shell to respond to stop"
+
+          create tests.gloo-cli.lib_objects.cmd as command
+          check ^^.cmd for responds_to? ('register')
+          assert "expected command to respond to register"
