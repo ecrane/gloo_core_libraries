@@ -13,6 +13,9 @@ class Shell < Gloo::Core::Obj
   INCLUDE_QUIT = 'include_quit'.freeze
   ON_ERROR = 'on_error'.freeze
   ON_UNKNOWN_CMD = 'on_unknown_command'.freeze
+  ON_EMPTY_CMD = 'on_empty_command'.freeze
+  BEFORE_ACTION = 'before_action'.freeze
+  AFTER_ACTION = 'after_action'.freeze
 
   #
   # The name of the object type.
@@ -151,6 +154,38 @@ class Shell < Gloo::Core::Obj
 
     Gloo::Exec::Dispatch.message( @engine, 'run', o )
     return true
+  end
+
+  #
+  # Run the on_empty_command script if one exists.
+  # Returns true if the script was found and run, false otherwise.
+  #
+  def run_on_empty_cmd
+    o = find_child ON_EMPTY_CMD
+    return false unless o
+
+    Gloo::Exec::Dispatch.message( @engine, 'run', o )
+    return true
+  end
+
+  #
+  # Run the before_action script if one exists.
+  #
+  def run_before_action
+    o = find_child BEFORE_ACTION
+    return unless o
+
+    Gloo::Exec::Dispatch.message( @engine, 'run', o )
+  end
+
+  #
+  # Run the after_action script if one exists.
+  #
+  def run_after_action
+    o = find_child AFTER_ACTION
+    return unless o
+
+    Gloo::Exec::Dispatch.message( @engine, 'run', o )
   end
 
 

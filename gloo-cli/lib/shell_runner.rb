@@ -51,6 +51,13 @@ class ShellRunner
   end
 
   #
+  # Handle an empty command — run on_empty_command if defined, otherwise do nothing.
+  #
+  def handle_empty_command
+    @obj.run_on_empty_cmd
+  end
+
+  #
   # Handle an unknown command — run on_unknown_cmd if defined, otherwise show default message.
   #
   def handle_unknown_command
@@ -243,12 +250,17 @@ class ShellRunner
 
     while ( ! @context.done && (line = Readline.readline(prompt, true)) )
       tokens = line.strip.split(" ")
-      next if tokens.empty?
+      if tokens.empty?
+        handle_empty_command
+        next
+      end
 
       result = traverse( @root, tokens )
 
       if result[:node]
+        @obj.run_before_action
         execute_command( result[:node], tokens, result[:parent] )
+        @obj.run_after_action
       else
         handle_unknown_command
       end
