@@ -98,6 +98,8 @@ class Shell < Gloo::Core::Obj
   
   #
   # Start the shell.
+  # If CLI args were passed, execute that command once and return.
+  # Otherwise, enter the interactive REPL.
   #
   def msg_start
     runner = get_runner
@@ -105,7 +107,12 @@ class Shell < Gloo::Core::Obj
     # add_test_commands
     add_quit_command
 
-    runner.start
+    cmd_tokens = @engine.args.files
+    if cmd_tokens.any?
+      runner.execute_once( cmd_tokens )
+    else
+      runner.start
+    end
   end
 
   #

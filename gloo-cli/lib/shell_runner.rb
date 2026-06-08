@@ -184,7 +184,22 @@ class ShellRunner
   #    REPL
   # ---------------------------------------------------------------------
 
-  # 
+  #
+  # Execute a single command from the given tokens and return.
+  # Used when a command is passed directly from the CLI.
+  #
+  def execute_once( tokens )
+    result = traverse( @root, tokens )
+    if result[:node]
+      @obj.run_before_action
+      execute_command( result[:node], tokens, result[:parent] )
+      @obj.run_after_action
+    else
+      handle_unknown_command
+    end
+  end
+
+  #
   # Traverse the command tree to find the matching node
   # 
   # @param node [CommandNode] The current node
