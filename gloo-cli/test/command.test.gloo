@@ -1,0 +1,50 @@
+#
+# Command Tests
+#
+test [can] :
+  command [can] :
+
+    on_load [script] :
+      load lib cli
+
+    typename [test] :
+      description [string] : command typename is registered
+      on_test [script] :
+        exists? object command
+        assert "expected command typename to be registered"
+
+    short_typename [test] :
+      description [string] : command short typename is registered
+      on_test [script] :
+        exists? object command
+        assert "expected command short typename to be registered"
+
+    messages [test] :
+      description [string] : command responds to expected messages
+      on_test [script] :
+        create test.command.cmd as command
+        check ^^.cmd for responds_to? ('register')
+        assert "expected command to respond to register"
+
+        check ^^.cmd for responds_to? ('unload')
+        assert "expected command to respond to unload"
+
+    adds_children_on_create [test] :
+      description [string] : command adds default children when created
+      on_test [script] :
+        create test.command.cmd2 as command
+        check ^^.cmd2 for contains?
+        assert "expected command to add default children on create"
+
+    default_children [test] :
+      description [string] : command default children are name, description, and action
+      on_test [script] :
+        create test.command.cmd3 as command
+        exists? instance test.command.cmd3.name
+        assert "expected command to have a name child"
+
+        exists? instance test.command.cmd3.description
+        assert "expected command to have a description child"
+
+        exists? instance test.command.cmd3.action
+        assert "expected command to have an action child"

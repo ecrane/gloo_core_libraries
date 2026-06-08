@@ -1,0 +1,37 @@
+#
+# Colorize Tests
+#
+test [can] :
+  colorize [can] :
+
+    on_load [script] :
+      load lib cli
+
+    typename [test] :
+      description [string] : colorize typename is registered
+      on_test [script] :
+        exists? object colorize
+        assert "expected colorize typename to be registered"
+
+    short_typename [test] :
+      description [string] : colorize short typename is registered
+      on_test [script] :
+        exists? object color
+        assert "expected colorize short typename (color) to be registered"
+
+    messages [test] :
+      description [string] : colorize responds to expected messages
+      on_test [script] :
+        create test.colorize.col as colorize
+        check ^^.col for responds_to? ('run')
+        assert "expected colorize to respond to run"
+
+        check ^^.col for responds_to? ('unload')
+        assert "expected colorize to respond to unload"
+
+    adds_children_on_create [test] :
+      description [string] : colorize adds default children when created
+      on_test [script] :
+        create test.colorize.col2 as colorize
+        check ^^.col2 for contains?
+        assert "expected colorize to add default children on create"

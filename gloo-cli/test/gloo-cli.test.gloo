@@ -59,3 +59,24 @@ tests [can] :
           create tests.gloo-cli.lib_objects.cmd as command
           check ^^.cmd for responds_to? ('register')
           assert "expected command to respond to register"
+
+      colorize_msgs [test] :
+        description [string] : confirm that colorize responds to its messages
+        on_test [script] :
+          create tests.gloo-cli.lib_objects.col as colorize
+          check ^^.col for responds_to? ('run')
+          assert "expected colorize to respond to run"
+
+      shell_default_children [test] :
+        description [string] : confirm that a new shell object has default children
+        on_test [script] :
+          create tests.gloo-cli.lib_objects.sh as shell
+          check ^^.sh for contains?
+          assert "expected shell to have default children"
+
+      command_default_children [test] :
+        description [string] : confirm that a new command object has default children
+        on_test [script] :
+          create tests.gloo-cli.lib_objects.cmd2 as command
+          check ^^.cmd2 for contains?
+          assert "expected command to have default children"

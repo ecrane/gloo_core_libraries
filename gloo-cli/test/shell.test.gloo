@@ -1,0 +1,50 @@
+#
+# Shell Tests
+#
+test [can] :
+  shell [can] :
+
+    on_load [script] :
+      load lib cli
+
+    typename [test] :
+      description [string] : shell typename is registered
+      on_test [script] :
+        exists? object shell
+        assert "expected shell typename to be registered"
+
+    short_typename [test] :
+      description [string] : shell short typename is registered
+      on_test [script] :
+        exists? object shell
+        assert "expected shell short typename to be registered"
+
+    messages [test] :
+      description [string] : shell responds to expected messages
+      on_test [script] :
+        create test.shell.sh as shell
+        check ^^.sh for responds_to? ('start')
+        assert "expected shell to respond to start"
+
+        check ^^.sh for responds_to? ('stop')
+        assert "expected shell to respond to stop"
+
+        check ^^.sh for responds_to? ('unload')
+        assert "expected shell to respond to unload"
+
+    adds_children_on_create [test] :
+      description [string] : shell adds default children when created
+      on_test [script] :
+        create test.shell.sh2 as shell
+        check ^^.sh2 for contains?
+        assert "expected shell to add default children on create"
+
+    default_children [test] :
+      description [string] : shell default children are prompt and default_action
+      on_test [script] :
+        create test.shell.sh3 as shell
+        exists? instance test.shell.sh3.prompt
+        assert "expected shell to have a prompt child"
+
+        exists? instance test.shell.sh3.default_action
+        assert "expected shell to have a default_action child"
