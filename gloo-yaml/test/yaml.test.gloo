@@ -1,0 +1,87 @@
+#
+# YAML object type tests
+#
+test [can] :
+  yaml [can] :
+
+    on_load [script] :
+      load lib yaml
+
+    typename [test] :
+      description [string] : yaml typename is registered
+      on_test [script] :
+        exists? object yaml
+        assert "expected yaml typename to be registered"
+
+    short_typename [test] :
+      description [string] : yml short typename is registered
+      on_test [script] :
+        exists? object yml
+        assert "expected yml short typename to be registered"
+
+    no_default_children [test] :
+      description [string] : yaml does not add children on create
+      on_test [script] :
+        create test.yaml.y as yaml
+        check ^^.y for contains?
+        refute "expected yaml to have no default children"
+
+    messages [test] :
+      description [string] : yaml object responds to load and save
+      on_test [script] :
+        create test.yaml.y2 as yaml
+
+        check ^^.y2 for responds_to? ('load')
+        assert "expected yaml to respond to load"
+
+        check ^^.y2 for responds_to? ('save')
+        assert "expected yaml to respond to save"
+
+        check ^^.y2 for responds_to? ('unload')
+        assert "expected yaml to respond to unload"
+
+    load_fields [test] :
+      description [string] : load populates container children from yaml file
+      on_test [script] :
+        create test.yaml.cfg as yaml
+        put '~/dev/gloo_core_libraries/gloo-yaml/test/fixtures/test_data.yaml' into ^^.cfg
+
+        create test.yaml.data as can
+        create test.yaml.data.title as string
+        create test.yaml.data.state as string
+
+        tell test.yaml.cfg to load (test.yaml.data)
+
+        eval test.yaml.data.title = 'Test Title'
+        assert "expected title to be loaded from yaml file"
+
+        eval test.yaml.data.state = 'active'
+        assert "expected state to be loaded from yaml file"
+
+    save_fields [test] :
+      description [string] : save writes container children back to yaml file
+      on_test [script] :
+        create test.yaml.cfg2 as yaml
+        put '~/dev/gloo_core_libraries/gloo-yaml/test/fixtures/test_data.yaml' into ^^.cfg2
+
+        # Load current values first
+        create test.yaml.data2 as can
+        create test.yaml.data2.title as string
+        create test.yaml.data2.state as string
+        tell test.yaml.cfg2 to load (test.yaml.data2)
+
+        # Update state and save
+        put 'saved' into test.yaml.data2.state
+        tell test.yaml.cfg2 to save (test.yaml.data2)
+
+        # Reload and verify the update was persisted
+        create test.yaml.verify as can
+        create test.yaml.verify.state as string
+        tell test.yaml.cfg2 to load (test.yaml.verify)
+
+        eval test.yaml.verify.state = 'saved'
+        assert "expected saved state to be persisted to yaml file"
+
+        # Restore original value
+        put 'active' into test.yaml.data2.state
+        tell test.yaml.cfg2 to save (test.yaml.data2)
