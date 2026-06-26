@@ -1,3 +1,7 @@
+1.2 - 2026.06.26
+ - Adds md_doc object for markdown with frontmatter.
+
+
 1.1 - 2026.02.11
  - Fixed nil data issue
 
