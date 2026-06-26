@@ -21,6 +21,7 @@ Gem::Specification.new do |spec|
   spec.files = [
     "lib/gloo-md.rb",
     "lib/md.rb",
+    "lib/md_doc.rb",
     "lib/markdown_ext.rb"
   ]
 

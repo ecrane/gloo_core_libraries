@@ -1,0 +1,97 @@
+#
+# MdDoc object type tests
+#
+tests [can] :
+  md_doc [can] :
+
+    on_load [script] :
+      load lib md
+
+    typename [test] :
+      description [string] : md_doc typename is registered
+      on_test [script] :
+        exists? object md_doc
+        assert "expected md_doc typename to be registered"
+
+    default_children [test] :
+      description [string] : md_doc has path, frontmatter, and body children
+      on_test [script] :
+        create tests.md_doc.doc as md_doc
+
+        exists? instance ^^.doc.path
+        assert "expected path child to exist"
+
+        exists? instance ^^.doc.frontmatter
+        assert "expected frontmatter child to exist"
+
+        exists? instance ^^.doc.body
+        assert "expected body child to exist"
+
+    messages [test] :
+      description [string] : md_doc responds to read and write
+      on_test [script] :
+        create tests.md_doc.doc2 as md_doc
+
+        check ^^.doc2 for responds_to? ('read')
+        assert "expected md_doc to respond to read"
+
+        check ^^.doc2 for responds_to? ('write')
+        assert "expected md_doc to respond to write"
+
+    read_frontmatter [test] :
+      description [string] : read populates frontmatter children from file
+      on_test [script] :
+        create tests.md_doc.doc3 as md_doc
+        put '~/dev/gloo_core_libraries/gloo-md/test/fixtures/test_doc.md' into ^^.doc3.path
+        tell ^^.doc3 to read
+
+        exists? instance ^^.doc3.frontmatter.title
+        assert "expected title child to be created"
+
+        eval tests.md_doc.doc3.frontmatter.title = 'Test Document'
+        assert "expected title to match file value"
+
+        eval tests.md_doc.doc3.frontmatter.state = 'draft'
+        assert "expected state to match file value"
+
+    read_body [test] :
+      description [string] : read populates body from file
+      on_test [script] :
+        create tests.md_doc.doc4 as md_doc
+        put '~/dev/gloo_core_libraries/gloo-md/test/fixtures/test_doc.md' into ^^.doc4.path
+        tell ^^.doc4 to read
+
+        check ^^.doc4.body for blank?
+        refute "expected body to be populated"
+
+    roundtrip [test] :
+      description [string] : write then read preserves frontmatter values
+      on_test [script] :
+        # Set up a temp file path
+        create tests.md_doc.tmp as md_doc
+        put '/tmp/gloo_md_doc_test.md' into ^^.tmp.path
+
+        # Populate frontmatter and body manually
+        create tests.md_doc.tmp.frontmatter.title as string
+        put 'Round Trip Title' into tests.md_doc.tmp.frontmatter.title
+
+        create tests.md_doc.tmp.frontmatter.state as string
+        put 'active' into tests.md_doc.tmp.frontmatter.state
+
+        put 'Round trip body text.' into tests.md_doc.tmp.body
+
+        # Write then read back into a fresh object
+        tell tests.md_doc.tmp to write
+
+        create tests.md_doc.check as md_doc
+        put '/tmp/gloo_md_doc_test.md' into ^^.check.path
+        tell ^^.check to read
+
+        eval tests.md_doc.check.frontmatter.title = 'Round Trip Title'
+        assert "expected title to survive round trip"
+
+        eval tests.md_doc.check.frontmatter.state = 'active'
+        assert "expected state to survive round trip"
+
+        eval tests.md_doc.check.body = 'Round trip body text.'
+        assert "expected body to survive round trip"
