@@ -1,3 +1,7 @@
+1.3 - 2026.06.26
+ - Adds md_doc support for complex objects.
+
+
 1.2 - 2026.06.26
  - Adds md_doc object for markdown with frontmatter.
 

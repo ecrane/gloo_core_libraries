@@ -79,7 +79,9 @@ class MdDoc < Gloo::Core::Obj
 
   #
   # Read the file at path, parse frontmatter and body, populate children.
-  # Frontmatter children are created dynamically from whatever keys are present.
+  # Only scalar frontmatter values become gloo string children; complex values
+  # (arrays, nested hashes) are skipped — they are preserved on write by
+  # re-reading the file.
   #
   def msg_read
     path = resolve_path
@@ -96,6 +98,7 @@ class MdDoc < Gloo::Core::Obj
     fm_can = find_child FRONTMATTER
     if fm_can && fm_hash
       fm_hash.each do |key, val|
+        next unless scalar?( val )
         child = fm_can.find_add_child( key.to_s, 'string' )
         child.set_value val.to_s
       end
@@ -107,25 +110,35 @@ class MdDoc < Gloo::Core::Obj
 
   #
   # Serialize frontmatter and body children back to the file at path.
-  # Creates the file if it does not exist.
+  # Re-reads the current file to get the base hash (preserving arrays and other
+  # complex values), then overlays the scalar children which may have been
+  # modified. Creates the file if it does not exist.
   #
   def msg_write
     path = resolve_path
     return unless path
 
+    expanded = File.expand_path( path )
+
+    # Re-read the file so arrays and nested hashes survive unchanged.
+    base = {}
+    if File.exist?( expanded )
+      base, _ = parse_frontmatter( File.read( expanded ) )
+    end
+
     fm_can = find_child FRONTMATTER
-    fm_hash = {}
+
+    # Overlay scalar children; updating an existing key preserves its position.
     if fm_can
       fm_can.children.each do |child|
-        fm_hash[ child.name ] = child.value
+        base[ child.name ] = child.value
       end
     end
 
     body = find_child BODY
     body_text = body ? body.value.to_s : ''
 
-    content = build_content( fm_hash, body_text )
-    File.write( File.expand_path( path ), content )
+    File.write( expanded, build_content( base, body_text ) )
   end
 
 
@@ -134,6 +147,15 @@ class MdDoc < Gloo::Core::Obj
   # ---------------------------------------------------------------------
 
   private
+
+  #
+  # True for scalar YAML values that can be stored as gloo string children.
+  # Arrays, hashes, and other complex types are skipped on read.
+  #
+  def scalar?( val )
+    val.is_a?( String ) || val.is_a?( Integer ) || val.is_a?( Float ) ||
+      val.is_a?( TrueClass ) || val.is_a?( FalseClass ) || val.nil?
+  end
 
   #
   # Get the expanded path string from the path child.
