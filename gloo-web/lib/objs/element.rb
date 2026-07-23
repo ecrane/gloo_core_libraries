@@ -248,5 +248,40 @@ module Objs
       end
     end
 
+    # ---------------------------------------------------------------------
+    #    Object Documentation
+    # ---------------------------------------------------------------------
+
+    #
+    # Get the object's documentation data.
+    #
+    def self.doc_data
+      {
+        :name => KEYWORD,
+        :shortcut => KEYWORD_SHORT,
+        :description => 'An HTML element.',
+        :children => [
+          'attributes (container) — All attributes are optional. The attributes of the HTML element, e.g. id (string) — the element id; classes (string) — element classes and styles (css).',
+          'content (container) — The element contents.'
+        ],
+        :messages => [
+          'render — Manually render the HTML element. Normally the render is called by the web server when the page containing the element is requested.'
+        ],
+        :examples => <<~EXAMPLES.strip
+          div_sub [e] :
+            attributes [can] :
+              id [string] : sub_area
+              class [string] : mt-3
+            content [can] :
+              h2 [e] : Sub
+              p [e] :
+                attributes [can] :
+                  class [string] : lead
+                content [can] :
+                  msg [string] : Sub area text goes here.
+        EXAMPLES
+      }
+    end
+
   end
 end

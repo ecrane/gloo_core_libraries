@@ -117,14 +117,45 @@ class Md < Gloo::Core::Obj
   # Redcarpet markdown processor.
   # 
   def self.md_2_html( md )
-    markdown = Redcarpet::Markdown.new( 
-      Redcarpet::Render::HTML, 
-      autolink: true, 
+    markdown = Redcarpet::Markdown.new(
+      Redcarpet::Render::HTML,
+      autolink: true,
       fenced_code_blocks: true,
-      tables: true, 
+      tables: true,
       strikethrough: true )
-      
+
     return markdown.render( md )
+  end
+
+  # ---------------------------------------------------------------------
+  #    Object Documentation
+  # ---------------------------------------------------------------------
+
+  #
+  # Get the object's documentation data.
+  #
+  def self.doc_data
+    {
+      :name => KEYWORD,
+      :shortcut => KEYWORD_SHORT,
+      :description => 'Markdown data in a text string. Also supports ' \
+        'gloo Markdown extensions (panel, note, quote, idea and check ' \
+        'blocks) rendered via MarkdownExt when the data is rendered.',
+      :messages => [
+        'show — Show the markdown data in the terminal.',
+        'render ({dst}) — Convert the markdown to HTML and put it in the {dst} object. The HTML is also put into it either way.',
+        'update_asset_path — Update asset paths for all images in the source markdown, so files can refer to images from a path different from the page using them.'
+      ],
+      :examples => <<~EXAMPLES.strip
+        md [can] :
+          f [file] :
+          on_load [script] :
+            put $.gloo.projects + "/o/data/txt.md" into md.f
+            tell md.f to read (md.data)
+            tell md.data to show
+          data [md] :
+      EXAMPLES
+    }
   end
 
 end

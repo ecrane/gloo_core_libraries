@@ -66,4 +66,40 @@ class CliColorize < Gloo::Core::Obj
     @engine.heap.it.set_to msg.to_s
   end
 
+  # ---------------------------------------------------------------------
+  #    Object Documentation
+  # ---------------------------------------------------------------------
+
+  #
+  # Get the object's documentation data.
+  #
+  def self.doc_data
+    {
+      :name => KEYWORD,
+      :shortcut => KEYWORD_SHORT,
+      :description => 'The Colorize object can be used to write output ' \
+        'in color. The Colorize container can contain multiple ' \
+        'strings, each one can have a different color as specified by ' \
+        'the names of the children.',
+      :children => [
+        '[color] (string) — The name of the child or children is the color. The string\'s value is what will be written out.'
+      ],
+      :messages => [
+        'run — Output the string in the color specified.'
+      ],
+      :examples => <<~EXAMPLES.strip
+        color [can] :
+          w [colorize] :
+            white [string] : This is white!
+          m [colorize] :
+            red [string] : red -
+            green [string] : green -
+            blue [string] : blue
+          on_load [script] :
+            run color.w
+            run color.m
+      EXAMPLES
+    }
+  end
+
 end

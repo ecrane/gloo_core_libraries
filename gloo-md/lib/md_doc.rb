@@ -197,4 +197,51 @@ class MdDoc < Gloo::Core::Obj
     "---\n#{fm_yaml}---\n#{body_text}"
   end
 
+  # ---------------------------------------------------------------------
+  #    Object Documentation
+  # ---------------------------------------------------------------------
+
+  #
+  # Get the object's documentation data.
+  #
+  def self.doc_data
+    {
+      :name => KEYWORD,
+      :shortcut => KEYWORD_SHORT,
+      :description => 'A Markdown file with YAML frontmatter. Holds a ' \
+        'path to a .md file and exposes the frontmatter fields as ' \
+        'dynamic string children under frontmatter, and the Markdown ' \
+        'body as a text child under body. Use read to load a file into ' \
+        'the object tree and write to serialize it back. Both ' \
+        'frontmatter and body can be modified between a read and a write.',
+      :children => [
+        'path (file) — Path to the Markdown file.',
+        'frontmatter (container) — Container whose children map to YAML frontmatter keys.',
+        'body (text) — The Markdown body (everything after the --- closing delimiter).'
+      ],
+      :messages => [
+        'read — Read the file at path, parse the YAML frontmatter and Markdown body. Frontmatter children are created dynamically from whatever keys are present in the file. Populates frontmatter.* children and body.',
+        'write — Serialize frontmatter children back to YAML and combine with body. Writes the result to the file at path, creating it if it does not exist. Key order is preserved; quoting style may normalize on first write, but semantic content is unchanged.'
+      ],
+      :notes => 'If the file has no frontmatter block, frontmatter ' \
+        'will have no children and body will contain the full file ' \
+        'content. If path is empty or the file does not exist, read ' \
+        'logs an error and returns without modifying children. Uses ' \
+        "Ruby's built-in psych library for YAML parsing — no " \
+        'additional dependencies.',
+      :examples => <<~EXAMPLES.strip
+        doc [md_doc] :
+          path [file] : ~/notes/project.md
+          frontmatter [can] :
+          body [text] :
+
+        on_load [script] :
+          load lib md
+          tell doc to read
+          show doc.frontmatter.title
+          show doc.body
+      EXAMPLES
+    }
+  end
+
 end

@@ -253,9 +253,9 @@ module Objs
       return fields
     end
 
-    # 
+    #
     # Render a string or other object.
-    # 
+    #
     def render_thing e
       begin
         return e.render( 'render_html' )
@@ -263,6 +263,61 @@ module Objs
         @engine.log_exception e
         return ''
       end
+    end
+
+    # ---------------------------------------------------------------------
+    #    Object Documentation
+    # ---------------------------------------------------------------------
+
+    #
+    # Get the object's documentation data.
+    #
+    def self.doc_data
+      {
+        :name => KEYWORD,
+        :shortcut => KEYWORD_SHORT,
+        :description => 'An HTML form. Contains a collection of form fields.',
+        :children => [
+          'name (string) — The name of the form, used for both the name and the id of the form element.',
+          'action (string) — The URL to which the form is submitted.',
+          "method (string) — Optional, default 'post'. The HTTP method used to submit the form.",
+          'cancel_path (string) — The URL to which the form is submitted when the cancel button is clicked.',
+          'styles (container) — Container of style classes for the form. Children: actions_div, submit, cancel, field_group, field_label, field_control.',
+          'content (container) — The collection of form fields. Other elements can also be included here, for formatting or extra buttons.'
+        ],
+        :messages => [
+          'render — Manually render the HTML form. Normally the render is called by the web server when the page containing the element is requested.'
+        ],
+        :examples => <<~EXAMPLES.strip
+          page [can] :
+            messages [can] :
+              new [page] :
+
+                head [e] :
+                  content [can] :
+                    title [e] : New Message
+
+                body [e] :
+                  content [can] :
+                    nav [alias] : shared.nav
+                    h2 [e] : New Message
+                    f [form] :
+                      name [string] : message_form
+                      action [string] : /messages
+                      method [string] : post
+                      cancel_path [string] : /messages
+                      styles [alias] : form_styles
+                      content [can] :
+                        id [field] :
+                          type [string] : hidden
+                          value [string] : 13
+                        message [field] :
+                          type [string] : text
+                          autofocus [boolean] : true
+                          placeholder [string] : the message goes here…
+                          …
+        EXAMPLES
+      }
     end
 
   end

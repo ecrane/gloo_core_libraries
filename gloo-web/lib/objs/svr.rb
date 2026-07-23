@@ -696,15 +696,90 @@ module Objs
       return o
     end
 
-    # 
+    #
     # Get the default layout for pages.
-    # 
+    #
     def default_layout
       o = find_child LAYOUT
       return nil unless o
 
       o = Gloo::Objs::Alias.resolve_alias( @engine, o )
       return o
+    end
+
+    # ---------------------------------------------------------------------
+    #    Object Documentation
+    # ---------------------------------------------------------------------
+
+    #
+    # Get the object's documentation data.
+    #
+    def self.doc_data
+      {
+        :name => KEYWORD,
+        :shortcut => KEYWORD_SHORT,
+        :description => 'A web server running inside gloo.',
+        :children => [
+          'config (container) — Configuration and settings for the server. See below for its children.',
+          'on_start (script) — Run when the web server is started.',
+          'on_stop (script) — Run when the web server is stopped.',
+          "layout (partial) — By convention an alias pointing to the layout used for all pages (layouts live in the layout root-level folder).",
+          'home (page) — By convention an alias pointing to the home page object (pages live in the page root-level folder).',
+          'error (page) — By convention an alias pointing to the default error page object.',
+          'pages (container) — Routes. By convention, aliases pointing to pages in the page root-level folder.',
+          'config.scheme (string) — \'http\' or \'https\'.',
+          "config.host (string) — Default: 'localhost'.",
+          "config.port (string) — Default: '8080'.",
+          'config.session_name (string) — Optional. Example: \'_myapp_session\'. The name of the session cookie.',
+          'config.encryption_key (string) — Optional. Encryption key for the session cookie.',
+          'config.encryption_iv (string) — Optional. Initialization vector for the session cookie encryption key.',
+          "config.cookie_expires (string) — Optional, default 'in 1 week'. When the session expires.",
+          "config.cookie_path (string) — Optional, default '/'. The path for the session cookie.",
+          'config.ssl_cert (string) — Optional, required for SSL. Path to certificate.pem.',
+          'config.ssl_key (string) — Optional, required for SSL. Path to key.pem.',
+          'on_request (script) — Optional. Run when the web server receives a request.',
+          'request_data (container) — Optional. Data available for use in on_request or elsewhere in the page rendering life-cycle: method, host, path, query, ip (all string, all optional, populated only if present).',
+          'on_response (script) — Optional. Run when the web server is done rendering and about to return a response.',
+          'response_data (container) — Optional. Data available for use in on_response (request_data is also available at this point): page, type, code, elapsed, db (all string, all optional, populated only if present).'
+        ],
+        :messages => [
+          'start — Start the web server.',
+          'stop — Stop the web server.',
+          'list_routes — Show the routing table. A debugging tool.',
+          'list_assets — Show the list of assets. A debugging tool.',
+          'list_asset_img — Show the list of image assets. A debugging tool.',
+          'list_asset_css — Show the list of CSS assets. A debugging tool.',
+          'list_asset_js — Show the list of JavaScript assets. A debugging tool.',
+          'add_session_to_response — Tell the gloo web server to include the session data in the response (put in the session cookie). Use when the user successfully authenticates.',
+          'clear_session_data — Clear the session data and tell the gloo web server to include the session data in the response. This destroys the session; use when the user logs out.'
+        ],
+        :examples => <<~EXAMPLES.strip
+          app [can] :
+            # The address of the running web server.
+            url [uri] : http://localhost:8083/
+
+            svr [svr] :
+              # Configuration for the web server.
+              config [container] :
+                scheme [string] : http
+                host [string] : localhost
+                port [string] : 8083
+
+              # Scripts to run when the server starts and stops.
+              on_start [script] : show '*** started ***'
+              on_stop [script] : show '*** stopped ***'
+
+              # Default Routes for the web server.
+              layout [alias] : layout.primary
+              home [alias] : page.home
+              error [alias] : page.err
+
+              # Routes for the web server.
+              pages [container] :
+                home [alias] : page.home
+                other [alias] : page.other
+        EXAMPLES
+      }
     end
 
   end

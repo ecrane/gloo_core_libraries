@@ -89,4 +89,34 @@ class CliConfirm < Gloo::Core::Obj
     set_result result
   end
 
+  # ---------------------------------------------------------------------
+  #    Object Documentation
+  # ---------------------------------------------------------------------
+
+  #
+  # Get the object's documentation data.
+  #
+  def self.doc_data
+    {
+      :name => KEYWORD,
+      :shortcut => KEYWORD_SHORT,
+      :description => 'CLI confirmation prompt.',
+      :children => [
+        "prompt (string) — Default: '> '. The confirmation prompt.",
+        'result (boolean) — The result of the prompt.'
+      ],
+      :messages => [
+        'run — Prompt the user and then set the result.'
+      ],
+      :examples => <<~EXAMPLES.strip
+        confirm [confirm] :
+          prompt [string] : Are you sure?
+          result [boolean] :
+          on_load [script] :
+            run confirm
+            show 'Confirmed: ' + confirm.result
+      EXAMPLES
+    }
+  end
+
 end

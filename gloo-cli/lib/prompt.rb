@@ -119,4 +119,35 @@ class Prompt < Gloo::Core::Obj
     set_result result
   end
 
+  # ---------------------------------------------------------------------
+  #    Object Documentation
+  # ---------------------------------------------------------------------
+
+  #
+  # Get the object's documentation data.
+  #
+  def self.doc_data
+    {
+      :name => KEYWORD,
+      :shortcut => KEYWORD_SHORT,
+      :description => 'CLI prompt for user input.',
+      :children => [
+        "prompt (string) — Default: '>'. The prompt displayed to the user.",
+        "result (string) — The result with the user's input."
+      ],
+      :messages => [
+        'run — Prompt the user and then set the result.',
+        'multiline — Show a multiline prompt.'
+      ],
+      :examples => <<~EXAMPLES.strip
+        ask [ask] :
+          prompt [string] : What is your name?
+          result [string] :
+          on_load [script] :
+            run ask
+            show 'Hello, ' + ask.result + '!  Thanks for playing'
+      EXAMPLES
+    }
+  end
+
 end

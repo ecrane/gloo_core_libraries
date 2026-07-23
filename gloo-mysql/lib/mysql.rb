@@ -247,4 +247,45 @@ class Mysql < Gloo::Core::Obj
     return true
   end
 
+  # ---------------------------------------------------------------------
+  #    Object Documentation
+  # ---------------------------------------------------------------------
+
+  #
+  # Get the object's documentation data.
+  #
+  def self.doc_data
+    {
+      :name => KEYWORD,
+      :shortcut => KEYWORD_SHORT,
+      :description => 'A MySQL database connection.',
+      :children => [
+        'host (string) — The database server host.',
+        'database (string) — The name of the database.',
+        'username (string) — The username with which to connect.',
+        "password (string) — The user's password."
+      ],
+      :messages => [
+        'verify — Verify that the database connection can be established.'
+      ],
+      :examples => <<~EXAMPLES.strip
+        mysql [can] :
+          on_load [script] :
+            run mysql.get_passwd
+            run mysql.sql
+          db [mysql] :
+            host : localhost
+            database : my_database
+            username : my_user
+            password [alias] : mysql.get_passwd.result
+          sql [query] :
+            database [alias] : mysql.db
+            sql : SELECT first, last, phone FROM people
+          get_passwd [ask] :
+            prompt [string] : Database Password?
+            result [string] :
+      EXAMPLES
+    }
+  end
+
 end

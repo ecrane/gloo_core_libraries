@@ -167,4 +167,34 @@ class Sqlite < Gloo::Core::Obj
     return true
   end
 
+  # ---------------------------------------------------------------------
+  #    Object Documentation
+  # ---------------------------------------------------------------------
+
+  #
+  # Get the object's documentation data.
+  #
+  def self.doc_data
+    {
+      :name => KEYWORD,
+      :shortcut => KEYWORD_SHORT,
+      :description => 'A Sqlite3 database connection.',
+      :children => [
+        "database (string) — Default: '#{DEFAULT_DB}'. The path to the database file."
+      ],
+      :messages => [
+        'verify — Verify that the database connection can be established.'
+      ],
+      :examples => <<~EXAMPLES.strip
+        sqlite [can] :
+          on_load [script] : run sqlite.sql
+          db [sqlite] :
+            database : test.db
+          sql [query] :
+            database [alias] : sqlite.db
+            sql : SELECT id, key, value FROM key_values
+      EXAMPLES
+    }
+  end
+
 end

@@ -120,4 +120,39 @@ class Select < Gloo::Core::Obj
     set_result self.key_for_option( result )
   end
 
+  # ---------------------------------------------------------------------
+  #    Object Documentation
+  # ---------------------------------------------------------------------
+
+  #
+  # Get the object's documentation data.
+  #
+  def self.doc_data
+    {
+      :name => KEYWORD,
+      :shortcut => KEYWORD_SHORT,
+      :description => 'Prompt for user to select from a list of options.',
+      :children => [
+        "prompt (string) — Default: '> '. The prompt displayed to the user.",
+        'options (container) — The list of options for the selection list. The name of each option is presented to the user, but the value is put in the result.',
+        "result (string) — The result with the user's selection."
+      ],
+      :messages => [
+        'run — Prompt the user for a selection and then set the result.'
+      ],
+      :examples => <<~EXAMPLES.strip
+        select [select] :
+          prompt [string] : What is your favorite color?
+          options [can] :
+            red : r
+            green : g
+            blue : b
+          result [string] :
+          on_load [script] :
+            run select
+            show select.result
+      EXAMPLES
+    }
+  end
+
 end

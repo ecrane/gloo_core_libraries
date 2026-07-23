@@ -262,4 +262,38 @@ class Query < Gloo::Core::Obj
     end
   end
 
+  # ---------------------------------------------------------------------
+  #    Object Documentation
+  # ---------------------------------------------------------------------
+
+  #
+  # Get the object's documentation data.
+  #
+  def self.doc_data
+    {
+      :name => KEYWORD,
+      :shortcut => KEYWORD_SHORT,
+      :description => 'A SQL Query — a SELECT, INSERT, UPDATE or other ' \
+        'SQL statement. The query requires a valid database connection.',
+      :children => [
+        'database (alias) — Reference to the database we\'re going to query.',
+        'sql (string) — The SQL query to execute.',
+        'result (container) — Optional. The result of the query will be a container for each row, with an object for each column. If not present, results are displayed in the console instead.',
+        'params (container) — Optional list of parameters for the query.'
+      ],
+      :messages => [
+        'run — Run the query and get back the data.'
+      ],
+      :examples => <<~EXAMPLES.strip
+        sqlite [can] :
+          on_load [script] : run sqlite.sql
+          db [sqlite] :
+            database : test.db
+          sql [query] :
+            database [alias] : sqlite.db
+            sql : SELECT id, key, value FROM key_values
+      EXAMPLES
+    }
+  end
+
 end

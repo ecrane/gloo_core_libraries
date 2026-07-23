@@ -266,4 +266,51 @@ class Table < Gloo::Core::Obj
     return columns.sort_by { |hsh| hsh[ :display_index ] }
   end
 
+  # ---------------------------------------------------------------------
+  #    Object Documentation
+  # ---------------------------------------------------------------------
+
+  #
+  # Get the object's documentation data.
+  #
+  def self.doc_data
+    {
+      :name => KEYWORD,
+      :shortcut => KEYWORD_SHORT,
+      :description => 'A data table.',
+      :children => [
+        'headers (container) — A list of headers. The name of each header object must match the name of the object in the data container; the value of the header is what will be displayed.',
+        'data (container) — The table\'s data. Contains one or more containers, each representing one row of data.',
+        'cells (container) — Optional. If present, cells can be formatted with a child per column you want to format; you don\'t need to specify a child for every column.',
+        'always_rows (boolean) — Optional. By default, if a table\'s data is only 1 row, it shows that row in a vertical table. Marking this true means a horizontal table is shown even if only one row is returned.'
+      ],
+      :messages => [
+        'show — Show the contents of the table in the CLI.'
+      ],
+      :examples => <<~EXAMPLES.strip
+        t [tbl] :
+          on_load [script] :
+            tell t to show
+          headers [can] :
+            name : Name
+            phone : Tel
+            notes : Notes
+          data [alias] : table_data
+        table_data [can] :
+          1 [can] :
+            name : Joe
+            phone : 312-555-1212
+            notes : Play golf with Joe
+          2 [can] :
+            name : Sally
+            phone : 708-555-1212
+            notes : met Sally at the meetup last week
+          3 [can] :
+            name : Frank
+            phone : 312-555-1213
+            notes : Frank Lee Speaking
+      EXAMPLES
+    }
+  end
+
 end

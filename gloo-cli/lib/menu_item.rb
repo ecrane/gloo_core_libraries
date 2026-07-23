@@ -88,4 +88,24 @@ class MenuItem < Gloo::Core::Obj
     return super
   end
 
+  # ---------------------------------------------------------------------
+  #    Object Documentation
+  # ---------------------------------------------------------------------
+
+  #
+  # Get the object's documentation data.
+  #
+  def self.doc_data
+    {
+      :name => KEYWORD,
+      :shortcut => KEYWORD_SHORT,
+      :description => 'A CLI menu item. One element in a CLI menu.',
+      :children => [
+        'shortcut (string) — Optional. May be used to select the menu item. If not provided, the name of the menu item is used instead.',
+        'description (string) — Optional. A textual description of the menu item action. If not provided, the value of the menu item is used instead.',
+        'do (script) — The script that will be run if the menu item is selected.'
+      ]
+    }
+  end
+
 end

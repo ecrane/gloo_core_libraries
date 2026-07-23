@@ -204,5 +204,49 @@ module Objs
       return part_content
     end
 
+    # ---------------------------------------------------------------------
+    #    Object Documentation
+    # ---------------------------------------------------------------------
+
+    #
+    # Get the object's documentation data.
+    #
+    def self.doc_data
+      {
+        :name => KEYWORD,
+        :shortcut => KEYWORD_SHORT,
+        :description => 'A partial web page hosted in a gloo web ' \
+          'server. By convention use an underscore prefix in the name ' \
+          "of the partial — e.g. _icons.gloo — to set it apart from " \
+          'pages and other gloo files.',
+        :children => [
+          'on_render (script) — Run when the partial page is going to be rendered.',
+          'after_render (script) — Run after the partial page has been rendered.',
+          'params (container) — Optional. Parameters to the partial page when rendered.',
+          'content (element) — The contents of the partial page.'
+        ],
+        :messages => [
+          'render — Manually render the content of the partial page. Normally the render is called by the web server when the page containing the partial is requested.'
+        ],
+        :examples => <<~EXAMPLES.strip
+          shared [can] :
+            nav [part] :
+              on_render [script] :
+                put ^.params.cnt + 1 into ^.params.cnt
+              params [container] :
+                cnt [int] : 0
+              content [can] :
+                div_nav [e] : BEGIN
+                  <div class="mt-1 mb-3">
+                    <a href="/">
+                      <button type="button" class="btn btn-primary">
+                      Home </button></a>
+                    <%= cnt %>
+                  </div>
+                  END
+        EXAMPLES
+      }
+    end
+
   end
 end

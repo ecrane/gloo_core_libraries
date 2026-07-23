@@ -551,10 +551,56 @@ module Objs
       fname = file_name
       download = download_file
 
-      return WebSvr::Response.new( 
+      return WebSvr::Response.new(
         @engine, code, type, data, true, fname, download )
     end
 
+    # ---------------------------------------------------------------------
+    #    Object Documentation
+    # ---------------------------------------------------------------------
+
+    #
+    # Get the object's documentation data.
+    #
+    def self.doc_data
+      {
+        :name => KEYWORD,
+        :shortcut => KEYWORD_SHORT,
+        :description => 'A web page hosted in a gloo web server.',
+        :children => [
+          'layout (partial) — Optional, uses the server default if not specified.',
+          'on_prerender (script) — Optional. Run before the page is rendered. Mostly used if you need to manually update parameters to the page.',
+          'on_render (script) — Run when the page is going to be rendered.',
+          'after_render (script) — Run after the page has been rendered.',
+          'params (container) — Optional. Parameters to the page when rendered — values populated by scripts, or query parameters mapped to children of the same name (children are not auto-created to match query params; they must be declared to specify which ones are expected).',
+          'head (element) — Elements to be added to the page header.',
+          'body (element) — Elements to be added to the page body.',
+          'For file-rendering pages (rendering a file instead of HTML):',
+          "content_type (string) — Value 'file'. Indicates that this page renders a file rather than HTML.",
+          'file_type (string) — Example: image/png. The type of file to be rendered.',
+          'file_path (file) — Optional; used when the content refers to a file on disk. Either file_path or file_data must be specified, not both.',
+          'file_data (text) — Optional; used when the content is dynamically generated. Either file_path or file_data must be specified, not both.',
+          'file_name (string) — Optional. Name of the file to be rendered; may differ from the URL used to access it.',
+          'download_file (boolean) — Optional, default false. If true, the browser is instructed to download the file instead of rendering it.'
+        ],
+        :messages => [
+          'render — Manually render the content of the page. Normally the render is called by the web server when the page is requested.'
+        ],
+        :examples => <<~EXAMPLES.strip
+          page [can] :
+            home [page] :
+              layout [alias] : layout.primary
+              params [container] :
+                msg [string] : Hello World!
+              head [can] :
+                title [e] : My Page
+              body [e] :
+                content [can] :
+                  h1 [e] : Hello!
+                  p [e] : message <%= msg %>
+        EXAMPLES
+      }
+    end
 
   end
 end

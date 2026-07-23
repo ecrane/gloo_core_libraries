@@ -409,19 +409,84 @@ module Objs
       HTML
     end
 
-    # 
+    #
     # Render the select field as HTML.
-    # 
+    #
     def render_select
       return <<~HTML
         <div class="#{field_group_styles} #{cols_tag}">
           #{label_tag}
-          <select class="#{field_control_styles}" 
+          <select class="#{field_control_styles}"
             name="#{name_value}" id="#{name_value}">
             #{select_options}
           </select>
         </div>
       HTML
+    end
+
+    # ---------------------------------------------------------------------
+    #    Object Documentation
+    # ---------------------------------------------------------------------
+
+    #
+    # Get the object's documentation data.
+    #
+    def self.doc_data
+      {
+        :name => KEYWORD,
+        :shortcut => KEYWORD_SHORT,
+        :description => 'An HTML form field. Might be a text field, a ' \
+          'checkbox, a select list or other type of form field.',
+        :children => [
+          'name (string) — Optional; if not specified, the name of the object is used. Used for both the name and the id of the field element.',
+          'type (string) — Required. Examples: text, checkbox, hidden, textarea, select, etc. Some other children depend on the type of the field.',
+          'value (string) — Optional. The value of the field.',
+          'label (string) — Optional; if not specified, the name of the field is used. The label for the field.',
+          'autofocus (boolean) — Optional, default false. Whether the field should be focused when the page loads.',
+          'placeholder (string) — Optional. The placeholder text for the field.',
+          'cols (string) — Optional. The number of columns for the field, appended to the bootstrap column class (can also add offset or other column classes). Example: 6.',
+          'rows (integer) — Optional. The number of rows for a textarea field; only used for textarea fields.',
+          'field_group (string) — Optional override for form styles: the field group style classes.',
+          'field_label (string) — Optional override for form styles: the field label style classes.',
+          'field_control (string) — Optional override for form styles: the field control style classes.',
+          'options (container) — Optional; only used for select fields. The options for the select field.',
+          'checked (boolean) — Optional; only used for checkbox fields. Whether the checkbox field is checked.'
+        ],
+        :messages => [
+          'render — Manually render the HTML field. Normally the render is called by the web server when the page containing the element is requested.'
+        ],
+        :examples => <<~EXAMPLES.strip
+          f [form] :
+            name [string] : message_form
+            action [string] : /messages
+            method [string] : post
+            cancel_path [string] : /messages
+            styles [alias] : form_styles
+            content [can] :
+              id [field] :
+                type [string] : hidden
+                value [string] : 13
+              message [field] :
+                type [string] : text
+                autofocus [boolean] : true
+                placeholder [string] : the message goes here…
+              description [field] :
+                type [string] : text
+                placeholder [string] : longer description…
+              opt [field] :
+                label [string] : Option
+                type [string] : select
+                value [string] : Option 3
+                options [can] :
+                  1 [string] : Option 1
+                  2 [string] : Option 2
+                  3 [string] : Option 3
+              box [field] :
+                type [string] : checkbox
+                checked [boolean] : false
+                description [string] : Check this box if you want to box it.
+        EXAMPLES
+      }
     end
 
   end

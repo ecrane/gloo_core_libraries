@@ -363,4 +363,68 @@ class Menu < Gloo::Core::Obj
 
   end
 
+  # ---------------------------------------------------------------------
+  #    Object Documentation
+  # ---------------------------------------------------------------------
+
+  #
+  # Get the object's documentation data.
+  #
+  def self.doc_data
+    {
+      :name => KEYWORD,
+      :shortcut => KEYWORD_SHORT,
+      :description => 'A CLI menu. This can be used for the main loop ' \
+        'of a CLI application. Many of the children are optional; some ' \
+        'will be created dynamically if they are not specified in the ' \
+        'source file. Note that a Quit menu item will be added ' \
+        'dynamically if one is not specified in the source file.',
+      :children => [
+        "prompt (string) — Default: '> '. Optional; if not provided a default timestamp option is used. The prompt shown for menu item selection.",
+        'items (container) — The list of menu items.',
+        'loop (boolean) — Run the menu in a loop? If true, once a menu item has run, the menu prompts again; setting it to false ends the menu. Created dynamically if not specified.',
+        'title (string) — Optional title to use rather than manually implementing a menu header. With a title, the default and before_menu items are not needed.',
+        'hide_items (boolean) — Optional, false by default. If false, the menu items are shown each time through the loop; if true, they\'re hidden (can always be shown by typing ? at the prompt).',
+        'default (script) — Optional. Run if no other option is selected (RETURN pressed). Can be used to clear the screen, for example.',
+        'before_menu (script) — Optional. Run at the top of each loop through the menu.'
+      ],
+      :messages => [
+        'run — Show the options and the prompt, then run the script for the user\'s selection. Optionally repeat as long as the loop child is true.'
+      ],
+      :notes => 'Built-in menu items, always available: q — quit this ' \
+        'menu (quits the app if this is the root menu, or goes up to ' \
+        'the prior menu if a sub-menu); qq — quit to the top level ' \
+        'menu (not shown); q! — quit gloo entirely (not shown); ' \
+        ': {command} — run a gloo command not part of the running app; ' \
+        ': (alone) — quit the running app and drop into gloo, keeping ' \
+        'loaded app objects in the stack.',
+      :examples => <<~EXAMPLES.strip
+        simple [menu] :
+          on_load [script] :
+            run simple
+          title [string] : Simple Menu
+          items [can] :
+            h [mitem] : Run Hello World
+              do [script] : show 'Hello World!'
+
+        menu [menu] :
+          on_load [script] :
+            run menu
+          prompt [string] : >
+          loop [bool] : true
+          items [can] :
+            hw [mitem] :
+              shortcut [str] : hw
+              description [str] : Run Hello World
+              do [script] :
+                show 'Hello World!'
+            q [mitem] :
+              shortcut [str] : q
+              description [str] : Quit this menu
+              do [script] :
+                put false into menu.loop
+      EXAMPLES
+    }
+  end
+
 end
