@@ -42,7 +42,7 @@ class Assert < Gloo::Core::Verb
     end
   end
 
-  # 
+  #
   # Get the assertion message.
   #
   def get_message
@@ -52,6 +52,37 @@ class Assert < Gloo::Core::Verb
       return result
     end
     return DEFAULT_MESSAGE
+  end
+
+  # ---------------------------------------------------------------------
+  #    Verb Documentation
+  # ---------------------------------------------------------------------
+
+  #
+  # Get the verb's documentation data.
+  #
+  def self.doc_data
+    {
+      :name => KEYWORD,
+      :shortcut => KEYWORD_SHORT,
+      :description => 'Assert an expectation about the state or ' \
+        'results. The verb looks at the value of it. If it is true, ' \
+        'then the assertion passes, otherwise it fails.',
+      :syntax => [ 'assert {optional expectation message}' ],
+      :parameters => [
+        "optional expectation message — A textual statement about " \
+          "what was expected. Optional. If none provided the default " \
+          "\"#{DEFAULT_MESSAGE}\" will be shown."
+      ],
+      :result => 'Validates an assumption and reports failures (or success).',
+      :examples => <<~EXAMPLES.strip
+        assert_noop [test] :
+          description [string] : Assert no operation
+          on_test [script] :
+            noop
+            assert 'noop should be true'
+      EXAMPLES
+    }
   end
 
 end

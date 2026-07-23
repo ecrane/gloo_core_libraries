@@ -55,4 +55,35 @@ class Refute < Gloo::Core::Verb
     return DEFAULT_MESSAGE
   end
 
+  # ---------------------------------------------------------------------
+  #    Verb Documentation
+  # ---------------------------------------------------------------------
+
+  #
+  # Get the verb's documentation data.
+  #
+  def self.doc_data
+    {
+      :name => KEYWORD,
+      :shortcut => KEYWORD_SHORT,
+      :description => 'Refute an expectation about the state or ' \
+        'results. The verb looks at the value of it. If it is false, ' \
+        'then the assertion passes, otherwise it fails.',
+      :syntax => [ 'refute {optional expectation message}' ],
+      :parameters => [
+        "optional expectation message — A textual statement about " \
+          "what was NOT expected. Optional. If none provided the " \
+          "default \"#{DEFAULT_MESSAGE}\" will be shown."
+      ],
+      :result => 'Validates a negative assumption and reports failures (or success).',
+      :examples => <<~EXAMPLES.strip
+        refute [test] :
+          description [string] : Refute an operation
+          on_test [script] :
+            eval false
+            refute 'false should be false'
+      EXAMPLES
+    }
+  end
+
 end
