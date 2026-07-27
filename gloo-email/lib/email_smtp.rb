@@ -109,12 +109,58 @@ class EmailSmtp < Gloo::Core::Obj
     smtp.send msg
   end
 
-  # 
+  #
   # Get the configuration for this SMTP server.
   #
   def get_config
     config = Config.new( server, port, username, password )
     return config
+  end
+
+  # ---------------------------------------------------------------------
+  #    Object Documentation
+  # ---------------------------------------------------------------------
+
+  #
+  # Get the object's documentation data.
+  #
+  def self.doc_data
+    {
+      :name => KEYWORD,
+      :shortcut => KEYWORD,
+      :description => 'An email SMTP configuration object, used to ' \
+        'send email messages.',
+      :children => [
+        'server (string) — The SMTP server host.',
+        'port (string) — The SMTP server port.',
+        'username (string) — The username with which to connect.',
+        "password (string) — The user's password."
+      ],
+      :messages => [
+        'send ({message.path}) — Send the given email message object using this SMTP configuration. A parameter is required: the path to an email message object.'
+      ],
+      :notes => 'No vault documentation exists for this object type — ' \
+        'this was authored directly from the code.',
+      :examples => <<~EXAMPLES.strip
+        mail [can] :
+          smtp [email_smtp] :
+            server : smtp.example.com
+            port : 587
+            username : me@example.com
+            password [alias] : mail.get_passwd.result
+
+          msg [email] :
+            to : someone@example.com
+            from : me@example.com
+            subject : Hello
+            body [text] : BEGIN
+              A message sent from gloo.
+              END
+
+          on_load [script] :
+            tell mail.smtp to send (mail.msg)
+      EXAMPLES
+    }
   end
 
 end

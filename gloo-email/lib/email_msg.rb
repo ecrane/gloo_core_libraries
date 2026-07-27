@@ -116,4 +116,50 @@ class EmailMsg < Gloo::Core::Obj
     smtp.send msg
   end
 
+  # ---------------------------------------------------------------------
+  #    Object Documentation
+  # ---------------------------------------------------------------------
+
+  #
+  # Get the object's documentation data.
+  #
+  def self.doc_data
+    {
+      :name => KEYWORD,
+      :shortcut => KEYWORD,
+      :description => 'An email message — the recipient, sender, ' \
+        'subject and body to send.',
+      :children => [
+        'to (string) — The recipient email address.',
+        'from (string) — The sender email address.',
+        'subject (string) — The email subject.',
+        'body (text) — The email body.'
+      ],
+      :messages => [
+        'send ({smtp.path}) — Send this message using the given SMTP configuration object. A parameter is required: the path to an email_smtp object.'
+      ],
+      :notes => 'No vault documentation exists for this object type — ' \
+        'this was authored directly from the code.',
+      :examples => <<~EXAMPLES.strip
+        mail [can] :
+          smtp [email_smtp] :
+            server : smtp.example.com
+            port : 587
+            username : me@example.com
+            password : secret
+
+          msg [email] :
+            to : someone@example.com
+            from : me@example.com
+            subject : Hello
+            body [text] : BEGIN
+              A message sent from gloo.
+              END
+
+          on_load [script] :
+            tell mail.msg to send (mail.smtp)
+      EXAMPLES
+    }
+  end
+
 end

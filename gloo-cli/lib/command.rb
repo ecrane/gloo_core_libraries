@@ -202,9 +202,9 @@ class Command < Gloo::Core::Obj
     return data
   end
 
-  # 
+  #
   # Get the command data for this command.
-  # 
+  #
   def get_command_data
     if dynamic?
       return {
@@ -229,6 +229,39 @@ class Command < Gloo::Core::Obj
         obj: pn
       }
     end
+  end
+
+  # ---------------------------------------------------------------------
+  #    Object Documentation
+  # ---------------------------------------------------------------------
+
+  #
+  # Get the object's documentation data.
+  #
+  def self.doc_data
+    {
+      :name => KEYWORD,
+      :shortcut => KEYWORD_SHORT,
+      :description => 'A single command in a shell\'s command tree. ' \
+        'Register it with a shell (via the register message) to make ' \
+        'it selectable at that shell\'s prompt; when selected, its ' \
+        'action script runs.',
+      :children => [
+        'name (string) — The command\'s name, as typed at the shell prompt.',
+        'description (string) — Shown alongside the command name when the shell lists its options.',
+        'action (script) — Run when the command is selected.',
+        'dynamic (string) — Optional. Marks this as a dynamic command whose children are generated at runtime from a named shell context list (set via a sibling command\'s options_key, or directly via Shell#set_context), rather than being declared up front.',
+        'nodes (container) — Optional. A container of child command objects, for a nested command tree under this one.',
+        'context (string) — Populated automatically with the selected child\'s name when a dynamic command\'s action runs.',
+        'options (container) — Optional. A fixed list of values for a dynamic command\'s source list, registered under options_key.',
+        'options_key (string) — Optional. The shell context key that options gets registered under.'
+      ],
+      :messages => [
+        'register ({shell.path}) — Register this command with the given shell object, adding it to that shell\'s command tree. A parameter is required: the path to the shell.'
+      ],
+      :notes => 'No vault documentation exists for this object type — ' \
+        'this was authored directly from the code.'
+    }
   end
 
 end

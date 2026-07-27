@@ -205,12 +205,52 @@ class Shell < Gloo::Core::Obj
   #
   def add_quit_command
     return unless include_quit?
-    
+
     @runner.add_command_node({
       name: "quit",
-      description: "Quit the application", 
+      description: "Quit the application",
       method: "cmd_quit"
     })
+  end
+
+  # ---------------------------------------------------------------------
+  #    Object Documentation
+  # ---------------------------------------------------------------------
+
+  #
+  # Get the object's documentation data.
+  #
+  def self.doc_data
+    {
+      :name => KEYWORD,
+      :shortcut => KEYWORD_SHORT,
+      :description => 'A CLI shell — an interactive command-driven ' \
+        'REPL, or a one-shot command executor when the app is invoked ' \
+        'with extra command-line arguments. Build up the command tree ' \
+        'by adding command objects (see the command object type) that ' \
+        'register themselves with this shell.',
+      :children => [
+        "prompt (string) — Default: '> '. The prompt shown at each turn of the REPL.",
+        'default_action (script) — Run when the user presses RETURN with no input.',
+        'include_quit (boolean) — Optional. If true, a built-in quit command is added automatically.',
+        'on_error (script) — Optional. Run when a command raises an error.',
+        "on_unknown_command (script) — Optional. Run when the input doesn't match any known command; if absent, a default \"Unknown command\" message is shown instead.",
+        'on_empty_command (script) — Optional. Run when the user submits an empty line.',
+        'before_action (script) — Optional. Run before every command executes.',
+        'after_action (script) — Optional. Run after every command executes.'
+      ],
+      :messages => [
+        'start — Start the shell. If the app was invoked with extra command-line arguments, execute that one command and return; otherwise enter the interactive REPL.',
+        'stop — Stop a running shell.'
+      ],
+      :notes => 'No vault documentation exists for this object type — ' \
+        'this was authored directly from the code. Commands attach to ' \
+        'a shell either by declaring a command object as a child and ' \
+        'sending it the register message with this shell\'s path, or ' \
+        'by calling add_command directly. The underlying tree/REPL ' \
+        'engine here was later ported into dev/gloo itself (as ' \
+        'Gloo::Shell::Runner) to power the interactive help shell.'
+    }
   end
 
 end

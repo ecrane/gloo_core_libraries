@@ -119,4 +119,38 @@ class YamlObj < Gloo::Core::Obj
     File.write( path, data.to_yaml )
   end
 
+  # ---------------------------------------------------------------------
+  #    Object Documentation
+  # ---------------------------------------------------------------------
+
+  #
+  # Get the object's documentation data.
+  #
+  def self.doc_data
+    {
+      :name => KEYWORD,
+      :shortcut => KEYWORD_SHORT,
+      :description => 'A YAML file object. Holds a path to a YAML ' \
+        'file (as its own value) and supports loading and saving ' \
+        'named fields via a container object.',
+      :messages => [
+        'load ({container.path}) — Load fields from the YAML file into the given container. Children of the container are matched by name to YAML keys. A parameter is required.',
+        'save ({container.path}) — Save fields from the given container into the YAML file, matching container children by name to YAML keys. A parameter is required.'
+      ],
+      :notes => 'No vault documentation exists for this object type — ' \
+        'this was authored directly from the code.',
+      :examples => <<~EXAMPLES.strip
+        settings [can] :
+          path [yaml] : ~/.my_app/settings.yml
+          data [can] :
+            name [string] :
+            theme [string] :
+          on_load [script] :
+            tell path to load (data)
+            put 'dark' into data.theme
+            tell path to save (data)
+      EXAMPLES
+    }
+  end
+
 end

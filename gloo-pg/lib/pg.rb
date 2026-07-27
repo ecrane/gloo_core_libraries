@@ -194,19 +194,59 @@ class Pg < Gloo::Core::Obj
     return true
   end
 
-  # 
+  #
   # Get the PG connection.
-  # 
+  #
   def pg_conn
     if host_value
       conn = PG.connect(
-        host_value, 5432, '', '', 
-        db_value, 
-        user_value, 
+        host_value, 5432, '', '',
+        db_value,
+        user_value,
         passwd_value )
     else
       conn = PG.connect( dbname: db_value )
     end
+  end
+
+  # ---------------------------------------------------------------------
+  #    Object Documentation
+  # ---------------------------------------------------------------------
+
+  #
+  # Get the object's documentation data.
+  #
+  def self.doc_data
+    {
+      :name => KEYWORD,
+      :shortcut => KEYWORD_SHORT,
+      :description => 'A Postgres database connection.',
+      :children => [
+        'host (string) — The database server host.',
+        'database (string) — The name of the database.',
+        'username (string) — The username with which to connect.',
+        "password (string) — The user's password."
+      ],
+      :messages => [
+        'verify — Verify that the database connection can be established.'
+      ],
+      :notes => 'No vault documentation exists for this object type — ' \
+        'this was authored directly from the code (same shape as ' \
+        'gloo-mysql\'s mysql object).',
+      :examples => <<~EXAMPLES.strip
+        postgres [can] :
+          on_load [script] :
+            run postgres.sql
+          db [postgres] :
+            host : localhost
+            database : my_database
+            username : my_user
+            password : my_password
+          sql [query] :
+            database [alias] : postgres.db
+            sql : SELECT first, last, phone FROM people
+      EXAMPLES
+    }
   end
 
 end

@@ -156,4 +156,46 @@ class EmailImap < Gloo::Core::Obj
     o.set_value body
   end
 
+  # ---------------------------------------------------------------------
+  #    Object Documentation
+  # ---------------------------------------------------------------------
+
+  #
+  # Get the object's documentation data.
+  #
+  def self.doc_data
+    {
+      :name => KEYWORD,
+      :shortcut => KEYWORD,
+      :description => 'An IMAP email connection, used to fetch ' \
+        'unseen messages from a mailbox.',
+      :children => [
+        'server (string) — The IMAP server host.',
+        'port (string) — The IMAP server port.',
+        'username (string) — The username with which to connect.',
+        "password (string) — The user's password.",
+        'mailbox (string) — The mailbox to select (e.g. INBOX).',
+        'messages (container) — Populated by fetch: one child per unseen message found, each an email object with from/to/subject/date/body.'
+      ],
+      :messages => [
+        'fetch — Connect to the IMAP server, select the mailbox, and fetch all unseen messages, adding each as a child of messages. Logs out and disconnects when done.'
+      ],
+      :notes => 'No vault documentation exists for this object type — ' \
+        'this was authored directly from the code.',
+      :examples => <<~EXAMPLES.strip
+        mail [can] :
+          inbox [email_imap] :
+            server : imap.example.com
+            port : 993
+            username : me@example.com
+            password : secret
+            mailbox : INBOX
+
+          on_load [script] :
+            tell mail.inbox to fetch
+            list mail.inbox.messages
+      EXAMPLES
+    }
+  end
+
 end
