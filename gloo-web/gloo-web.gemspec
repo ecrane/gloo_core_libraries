@@ -13,7 +13,7 @@ Gem::Specification.new do |spec|
 
   spec.summary       = %q{Gloo core library. Web Server and framework.}
   spec.description   = %q{Adds Web server and framework to Gloo.}
-  spec.homepage      = "https://gloo.ecrane.us/"
+  spec.homepage      = "https://github.com/ecrane/gloo"
   spec.license       = 'MIT'
 
   spec.metadata["gloo.type"] = "core-library"

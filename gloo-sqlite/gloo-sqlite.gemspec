@@ -13,7 +13,7 @@ Gem::Specification.new do |spec|
 
   spec.summary       = %q{Gloo core library. SQLite support.}
   spec.description   = %q{Adds SQLite support to Gloo.}
-  spec.homepage      = "https://gloo.ecrane.us/"
+  spec.homepage      = "https://github.com/ecrane/gloo"
   spec.license       = 'MIT'
 
   spec.metadata["gloo.type"] = "core-library"
