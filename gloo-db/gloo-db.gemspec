@@ -17,6 +17,7 @@ Gem::Specification.new do |spec|
   spec.license       = 'MIT'
 
   spec.metadata["gloo.type"] = "core-library"
+  spec.metadata["documentation_uri"] = "https://github.com/ecrane/gloo"
 
   spec.files = [
     "lib/gloo-db.rb",
