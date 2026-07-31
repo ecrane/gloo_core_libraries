@@ -1,7 +1,7 @@
 #
 # Test Runner.
 #
-class TestRunner < Gloo::Core::Verb
+class TestRunner
 
 
   #
