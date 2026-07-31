@@ -17,6 +17,7 @@ Gem::Specification.new do |spec|
   spec.metadata["documentation_uri"] = "https://github.com/ecrane/gloo"
 
   spec.files = [
+    "README.md",
     "lib/gloo-beep.rb",
     "lib/beep.rb"
   ]
