@@ -231,7 +231,8 @@ class Menu < Gloo::Core::Obj
         dt = DateTime.now
         d = dt.strftime( '%Y.%m.%d' )
         t = dt.strftime( '%I:%M:%S' )
-        cmd = @engine.platform.prompt.ask( "#{d.yellow} #{t.white} >" )
+        theme = @engine.theme
+        cmd = @engine.platform.prompt.ask( "#{theme.accent( d )} #{theme.emphasis( t )} >" )
       else
         cmd = @engine.platform.prompt.ask( prompt_value )
       end
@@ -311,15 +312,20 @@ class Menu < Gloo::Core::Obj
     end
   end
 
-  # 
+  #
   # There is a title, so show it.
-  # 
+  #
+  # Deliberately left uncolored, same reasoning as
+  # Gloo::App::Table#show: box-drawing borders and text read fine
+  # against the terminal's own default colors, and forcing a fixed
+  # foreground/background fights whatever theme the terminal is
+  # actually running.
+  #
   def run_default_title
     @engine.platform&.clear_screen
     show_menu_stack
 
-    title_text = @engine.platform.table.box( title )
-    puts title_text.colorize( :color => :white, :background => :black )
+    puts @engine.platform.table.box( title )
   end
 
   #

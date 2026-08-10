@@ -37,7 +37,7 @@ class TestRunner
   def setup
     @engine.log.debug "TestRunner is running…"
     puts
-    puts "Gloo Test Runner".white
+    puts @engine.theme.emphasis( "Gloo Test Runner" )
     puts
 
     # Get a list of test files and randomize

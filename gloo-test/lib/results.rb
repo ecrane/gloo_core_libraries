@@ -76,10 +76,11 @@ class Results
   # Show the results.
   #
   def show_results
+    theme = @engine.theme
     delta = duration.round( 2 )
     puts
     puts get_result_summary
-    puts "Tests finished in #{delta} seconds".white
+    puts theme.emphasis( "Tests finished in #{delta} seconds" )
     puts
   end
 
@@ -88,26 +89,28 @@ class Results
   #
   def show_failures
     if @fail_count > 0
+      theme = @engine.theme
       puts
-      puts "*** Failures (#{@fail_count}) ***".red
+      puts theme.error( "*** Failures (#{@fail_count}) ***" )
       puts
       @failures.each do |failure|
         failure.show_failure
       end
     end
   end
-  
-  # 
+
+  #
   # Get a textual summary of the results.
   #
   def get_result_summary
-    str = "Tests: #{@all_results.length} • Passed: #{@pass_count} • ".white
+    theme = @engine.theme
+    str = theme.emphasis( "Tests: #{@all_results.length} • Passed: #{@pass_count} • " )
     if @fail_count > 0
-      str += " Failed: #{@fail_count} ".red
+      str += theme.error( " Failed: #{@fail_count} " )
     else
-      str += " Failed: #{@fail_count} ".white
+      str += theme.emphasis( " Failed: #{@fail_count} " )
     end
-    str += "\n  Assertions: #{@assert_count} • Files: #{@file_count}".yellow
+    str += theme.accent( "\n  Assertions: #{@assert_count} • Files: #{@file_count}" )
     return str
   end
 
