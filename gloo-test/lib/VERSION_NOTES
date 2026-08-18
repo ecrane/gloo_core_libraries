@@ -1,3 +1,7 @@
+1.2 - 2026.08.18
+ - Adds light | dark mode option for terminal output.
+
+
 1.1 - 2026.07.31
  - Fixes issue with something tagged as a verb that was not.
 
