@@ -238,6 +238,11 @@ class ShellRunner
 
       result = traverse( @root, tokens[0..-2] )
       current = result[:node]
+
+      # An unrecognized command prefix means there's nothing to complete —
+      # fall back to no matches instead of crashing on a nil node.
+      next [] unless current
+
       options = current.children( @context ).map( &:name )
 
       matches = options.grep(/^#{Regexp.escape(input)}/)
