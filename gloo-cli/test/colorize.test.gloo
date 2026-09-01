@@ -1,11 +1,16 @@
 #
 # Colorize Tests
 #
+load lib cli
+
 test [can] :
   colorize [can] :
 
-    on_load [script] :
-      load lib cli
+    line [colorize] :
+      green : hello
+      white :  world
+
+    captured [string] :
 
     typename [test] :
       description [string] : colorize typename is registered
@@ -35,3 +40,15 @@ test [can] :
         create test.colorize.col2 as colorize
         check ^^.col2 for contains?
         assert "expected colorize to add default children on create"
+
+    run_assembles_the_line [test] :
+      description [string] : run joins the child values and puts the result in it
+      on_test [script] :
+        run ^^.line
+        put it into test.colorize.captured
+
+        check ^^.captured for substring? ( "hello" )
+        assert "expected the first child's text in the assembled line"
+
+        check ^^.captured for substring? ( "world" )
+        assert "expected the second child's text in the assembled line"
