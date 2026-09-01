@@ -1,11 +1,13 @@
 #
 # Markdown tests
 #
+load lib md
+
 tests [can] :
   md [can] :
 
-    on_load [script] :
-      load lib md
+    src [markdown] :
+    html [text] :
 
     md_object [test] :
       description [string] : The md object exists
@@ -22,3 +24,24 @@ tests [can] :
 
         check ^^.md for responds_to? ('show')
         assert 'expected md to be able to show'
+
+    render_to_html [test] :
+      description [string] : render converts markdown to HTML, into the dst object and into it
+      on_test [script] :
+        # a path inside ( ) params must be absolute, not a ^ ref
+        put '# Title' into ^^.src
+        tell ^^.src to render ( tests.md.html )
+
+        eval it = ^^.html
+        assert "expected the rendered HTML to be in it"
+
+        check ^^.html for substring? ( "<h1>Title</h1>" )
+        assert "expected the dst object to hold the rendered HTML"
+
+    render_inline_markdown [test] :
+      description [string] : common inline markdown renders
+      on_test [script] :
+        put 'some **bold** words' into ^^.src
+        tell ^^.src to render ( tests.md.html )
+        check ^^.html for substring? ( "<strong>bold</strong>" )
+        assert "expected bold to render"
