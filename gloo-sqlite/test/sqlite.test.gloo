@@ -1,12 +1,37 @@
 #
 # sqlite tests
 #
+load lib db
+load lib sqlite
+
 tests [can] :
   sqlite [can] :
 
-    on_load [script] :
-      load lib db
-      load lib sqlite
+    # a scratch db under /tmp, created by the first query and removed
+    # at the end of the round-trip test
+    conn [sqlite] :
+      database : /tmp/gloo_sqlite_test.db
+
+    dbfile [file] : /tmp/gloo_sqlite_test.db
+
+    make [query] :
+      database [alias] : tests.sqlite.conn
+      sql : CREATE TABLE IF NOT EXISTS t ( id INTEGER PRIMARY KEY, name TEXT )
+
+    wipe [query] :
+      database [alias] : tests.sqlite.conn
+      sql : DELETE FROM t
+
+    add [query] :
+      database [alias] : tests.sqlite.conn
+      sql : INSERT INTO t ( name ) VALUES ( ? )
+      params [can] :
+        name :
+
+    fetch [query] :
+      database [alias] : tests.sqlite.conn
+      sql : SELECT id, name FROM t ORDER BY id
+      result [can] :
 
     sqlite_object [test] :
       description [string] : The sqlite object exists
@@ -20,3 +45,28 @@ tests [can] :
         create tests.sqlite.db as sqlite
         check ^^.db for responds_to? ('verify')
         assert 'expected sqlite to be able to verify'
+
+    query_round_trip [test] :
+      description [string] : create a table, insert rows, and select them back into a result container
+      on_test [script] :
+        run tests.sqlite.make
+        run tests.sqlite.wipe
+
+        put 'alpha' into tests.sqlite.add.params.name
+        run tests.sqlite.add
+        put 'beta' into tests.sqlite.add.params.name
+        run tests.sqlite.add
+
+        run tests.sqlite.fetch
+
+        tell tests.sqlite.fetch.result to count
+        eval it = 2
+        assert "expected two rows back from the select"
+
+        eval tests.sqlite.fetch.result.0.name = 'alpha'
+        assert "expected the first row's name column"
+
+        eval tests.sqlite.fetch.result.1.name = 'beta'
+        assert "expected the second row's name column"
+
+        tell tests.sqlite.dbfile to delete
