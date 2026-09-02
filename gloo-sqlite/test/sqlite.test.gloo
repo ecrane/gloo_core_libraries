@@ -33,6 +33,15 @@ tests [can] :
       sql : SELECT id, name FROM t ORDER BY id
       result [can] :
 
+    # a single-row select whose result columns are aliases pointing
+    # elsewhere - the update path that needs the engine to resolve them
+    found_name [string] :
+    fetch_one [query] :
+      database [alias] : tests.sqlite.conn
+      sql : SELECT name FROM t ORDER BY id LIMIT 1
+      result [can] :
+        name [alias] : tests.sqlite.found_name
+
     sqlite_object [test] :
       description [string] : The sqlite object exists
       on_test [script] :
@@ -68,5 +77,21 @@ tests [can] :
 
         eval tests.sqlite.fetch.result.1.name = 'beta'
         assert "expected the second row's name column"
+
+        tell tests.sqlite.dbfile to delete
+
+    single_row_alias_result [test] :
+      description [string] : a single-row select maps onto alias children in the result container
+      on_test [script] :
+        run tests.sqlite.make
+        run tests.sqlite.wipe
+        put 'solo' into tests.sqlite.add.params.name
+        run tests.sqlite.add
+
+        put '' into tests.sqlite.found_name
+        run tests.sqlite.fetch_one
+
+        eval tests.sqlite.found_name = 'solo'
+        assert "expected the aliased result column to be filled in"
 
         tell tests.sqlite.dbfile to delete

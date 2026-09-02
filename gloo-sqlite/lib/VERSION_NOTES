@@ -1,3 +1,9 @@
+1.5 - 2026.09.02
+ - query now returns [ columns, rows ] like gloo-mysql and gloo-pg,
+   so [tbl] objects backed by a sqlite query render, and single-row
+   selects can resolve alias children in the result container
+   (QueryResult now gets the engine).
+
 1.4 - 2026.09.01
  - Fixes issue with incorrect class path
 

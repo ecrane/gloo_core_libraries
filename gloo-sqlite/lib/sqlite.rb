@@ -110,26 +110,28 @@ class Sqlite < Gloo::Core::Obj
     name = db_value
     unless name
       @engine.err DB_REQUIRED_ERR
-      return
+      return [ [], [] ]
     end
 
     db = SQLite3::Database.open name
     # db.results_as_hash = true
     results = db.query( sql, params )
 
-    return results
-  end
-
-  # 
-  # Based on the result set, build a QueryResult object.
-  # 
-  def get_query_result( result )
-    rows = []        
-    while ( row = result.next ) do
+    rows = []
+    while ( row = results.next ) do
       rows << row
     end
 
-    return QueryResult.new( result.columns, rows )
+    # Return [ column names, rows ] - the same shape as gloo-mysql and
+    # gloo-pg, so callers (Query, Table) can treat every backend alike.
+    return [ results.columns, rows ]
+  end
+
+  #
+  # Based on the result set, build a QueryResult object.
+  #
+  def get_query_result( result )
+    return QueryResult.new( result[0], result[1], @engine )
   end
 
 
