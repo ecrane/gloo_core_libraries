@@ -16,6 +16,7 @@ class Shell < Gloo::Core::Obj
   ON_EMPTY_CMD = 'on_empty_command'.freeze
   BEFORE_ACTION = 'before_action'.freeze
   AFTER_ACTION = 'after_action'.freeze
+  WITH_COMMAND = 'with_command'.freeze
 
   #
   # The name of the object type.
@@ -89,17 +90,37 @@ class Shell < Gloo::Core::Obj
     return super + [ 'start', 'stop' ]
   end
 
-  # 
+  #
   # Get the shell runner or initialize it if it doesn't exist.
+  # In App mode, any CLI parameter(s) after the app path become the
+  # runner's single command (see ShellRunner#single_command?) rather
+  # than files for gloo to load - @engine.args keeps those out of
+  # @engine.args.files for exactly this reason.
   #
   def get_runner
-    return @runner ||= ShellRunner.new( @engine, self )
+    set_with_command
+    return @runner ||= ShellRunner.new( @engine, self, command: @engine.args.command_tokens )
   end
-  
+
+  #
+  # If the app was invoked with a supplied command, record it on a
+  # with_command child (creating it if the script hasn't declared one
+  # itself), so scripts can tell a one-shot run from an interactive
+  # session - even before the shell starts (e.g. to skip a banner or
+  # menu). Left untouched (and uncreated) when no command was given.
+  #
+  def set_with_command
+    tokens = @engine.args.command_tokens
+    return if tokens.empty?
+
+    o = find_child( WITH_COMMAND ) || @engine.factory.create_string( WITH_COMMAND, '', self )
+    o.set_value( tokens.join( ' ' ) )
+  end
+
   #
   # Start the shell.
-  # If CLI args were passed, execute that command once and return.
-  # Otherwise, enter the interactive REPL.
+  # If the app was invoked with extra command-line arguments, execute
+  # that one command and return. Otherwise, enter the interactive REPL.
   #
   def msg_start
     runner = get_runner
@@ -107,12 +128,7 @@ class Shell < Gloo::Core::Obj
     # add_test_commands
     add_quit_command
 
-    cmd_tokens = @engine.args.files
-    if cmd_tokens.any?
-      runner.execute_once( cmd_tokens )
-    else
-      runner.start
-    end
+    runner.start
   end
 
   #
@@ -237,7 +253,11 @@ class Shell < Gloo::Core::Obj
         "on_unknown_command (script) — Optional. Run when the input doesn't match any known command; if absent, a default \"Unknown command\" message is shown instead.",
         'on_empty_command (script) — Optional. Run when the user submits an empty line.',
         'before_action (script) — Optional. Run before every command executes.',
-        'after_action (script) — Optional. Run after every command executes.'
+        'after_action (script) — Optional. Run after every command executes.',
+        'with_command (string) — Not present by default. Set (and created if the ' \
+          'script hasn\'t declared it) to the supplied command text whenever the app ' \
+          'was invoked with extra command-line arguments - check for it to tell a ' \
+          'one-shot run from an interactive session.'
       ],
       :messages => [
         'start — Start the shell. If the app was invoked with extra command-line arguments, execute that one command and return; otherwise enter the interactive REPL.',

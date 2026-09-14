@@ -11,14 +11,18 @@ class ShellRunner
   DEFAULT_PROMPT = " -> "
   UNKNOWN_COMMAND = "Unknown command".freeze
   
-  # 
+  #
   # Initialize the shell runner
-  # 
+  #
   # @param obj [Object] The shell obj.
-  # 
-  def initialize( engine, obj )
+  # @param opts [Hash] :command (Array<String>) - tokens for a single
+  #   command to run once, instead of entering the interactive REPL -
+  #   see #single_command?.
+  #
+  def initialize( engine, obj, opts = {} )
     @engine = engine
     @obj = obj
+    @command = opts[ :command ]
     @context = ShellContext.new
     @root = CommandNode.new( nil )
   end
@@ -27,12 +31,26 @@ class ShellRunner
   # ---------------------------------------------------------------------
   #    Shell, control, start and stop
   # ---------------------------------------------------------------------
-  
-  # 
-  # Start the shell.
-  # 
+
+  #
+  # Were command tokens supplied at construction? When true, #start
+  # runs that one command via #execute_once and returns instead of
+  # entering the REPL.
+  #
+  def single_command?
+    return !( @command.nil? || @command.empty? )
+  end
+
+  #
+  # Start the shell: run the single supplied command and return,
+  # or enter the interactive REPL if none was supplied.
+  #
   def start
-    repl
+    if single_command?
+      execute_once( @command )
+    else
+      repl
+    end
   end
 
   # 
