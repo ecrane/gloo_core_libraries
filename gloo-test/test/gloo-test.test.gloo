@@ -22,3 +22,15 @@ tests [can] :
         on_test [script] :
           exists? verb refute
           assert "refute verb should exist"
+
+      assert_passes_on_a_true_value [test] :
+        description [string] : assert passes when it is true
+        on_test [script] :
+          eval true
+          assert "expected assert to pass when it is true"
+
+      refute_passes_on_a_false_value [test] :
+        description [string] : refute passes when it is false
+        on_test [script] :
+          eval false
+          refute "expected refute to pass when it is false"
