@@ -8,12 +8,17 @@ tests [can] :
 
     src [markdown] :
     html [text] :
+    note_src_file [file] :
+    note_src [markdown] :
 
     md_object [test] :
       description [string] : The md object exists
       on_test [script] :
+        exists? object markdown
+        assert "markdown object should exist"
+
         exists? object md
-        assert "md object should exist"
+        assert "md short type should exist"
 
     md_render [test] :
       description [string] : The md object can render
@@ -45,3 +50,30 @@ tests [can] :
         tell ^^.src to render ( tests.md.html )
         check ^^.html for substring? ( "<strong>bold</strong>" )
         assert "expected bold to render"
+
+    render_note_extension [test] :
+      description [string] : a [!NOTE] block renders through the full render pipeline
+      on_test [script] :
+        # markdown values are single-line, so a real multi-line source
+        # with a blank line after the extension block (required for it
+        # to render - see markdown_ext_test.rb) comes from a fixture
+        # file rather than a literal.
+        # The generic [file] type's own read message does not expand
+        # '~' the way MdDoc#resolve_path does (it calls File.exist?
+        # on the raw value) - a real absolute path is needed here.
+        put '/Users/ecrane/dev/gloo_core_libraries/gloo-md/test/fixtures/note_extension.md' into ^^.note_src_file
+        tell ^^.note_src_file to read ( tests.md.note_src )
+
+        tell ^^.note_src to render ( tests.md.html )
+
+        check ^^.html for substring? ( "gloo-panel-secondary" )
+        assert "expected the note block to render as a secondary panel"
+
+        check ^^.html for substring? ( "Heads up" )
+        assert "expected the note title to appear in the rendered HTML"
+
+        check ^^.html for substring? ( "Before." )
+        assert "expected markdown before the extension block to still render"
+
+        check ^^.html for substring? ( "After." )
+        assert "expected markdown after the extension block to still render"
