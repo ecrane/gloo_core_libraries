@@ -1,6 +1,13 @@
 #
 # Database tests
 #
+# gloo-db is an abstract base - it has no database driver of its
+# own, so nothing here actually runs a query end to end. That
+# coverage belongs to a concrete driver gem's own .gloo suite
+# (gloo-sqlite is the natural one to start with - no server needed).
+# What's tested here is structure only: typenames, messages, and
+# default children.
+#
 tests [can] :
   db [can] :
 
@@ -15,3 +22,65 @@ tests [can] :
 
         exists? object table
         assert "table object should exist"
+
+    query_short_typename [test] :
+      description [string] : the sql short typename is registered
+      on_test [script] :
+        exists? object sql
+        assert "expected the sql short typename to be registered"
+
+    query_messages [test] :
+      description [string] : query responds to run and unload
+      on_test [script] :
+        create tests.db.q as query
+
+        check ^^.q for responds_to? ('run')
+        assert "expected query to respond to run"
+
+        check ^^.q for responds_to? ('unload')
+        assert "expected query to respond to unload"
+
+    query_default_children [test] :
+      description [string] : query default children are database, sql, and result
+      on_test [script] :
+        create tests.db.q2 as query
+
+        exists? instance tests.db.q2.database
+        assert "expected query to have a database child"
+
+        exists? instance tests.db.q2.sql
+        assert "expected query to have a sql child"
+
+        exists? instance tests.db.q2.result
+        assert "expected query to have a result child"
+
+    table_short_typename [test] :
+      description [string] : the tbl short typename is registered
+      on_test [script] :
+        exists? object tbl
+        assert "expected the tbl short typename to be registered"
+
+    table_messages [test] :
+      description [string] : table responds to show, render, and unload
+      on_test [script] :
+        create tests.db.t as table
+
+        check ^^.t for responds_to? ('show')
+        assert "expected table to respond to show"
+
+        check ^^.t for responds_to? ('render')
+        assert "expected table to respond to render"
+
+        check ^^.t for responds_to? ('unload')
+        assert "expected table to respond to unload"
+
+    table_default_children [test] :
+      description [string] : table default children are headers and data
+      on_test [script] :
+        create tests.db.t2 as table
+
+        exists? instance tests.db.t2.headers
+        assert "expected table to have a headers child"
+
+        exists? instance tests.db.t2.data
+        assert "expected table to have a data child"

@@ -185,7 +185,7 @@ class Table < Gloo::Core::Obj
   # Render the table.
   # The render_ƒ is 'render_html', 'render_text', 'render_json', etc.
   # 
-  def render render_ƒ
+  def render render_ƒ = :render_html
     begin
       result = self.data
       head = self.headers 

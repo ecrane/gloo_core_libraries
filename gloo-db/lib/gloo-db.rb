@@ -1,6 +1,6 @@
-# 
-# Shim to allow `require 'gloo-mysql'`
-# 
+#
+# Shim to allow `require 'gloo-db'`
+#
 # This file is loaded when someone does `require 'gloo-mysql'`
 # 
 require 'query'
