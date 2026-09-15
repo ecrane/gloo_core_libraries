@@ -20,3 +20,23 @@ tests [can] :
         create tests.mysql.db as mysql
         check ^^.db for responds_to? ('verify')
         assert 'expected mysql to be able to verify'
+
+        check ^^.db for responds_to? ('unload')
+        assert 'expected mysql to be able to unload'
+
+    default_children [test] :
+      description [string] : mysql default children are host, database, username, and password
+      on_test [script] :
+        create tests.mysql.db2 as mysql
+
+        exists? instance tests.mysql.db2.host
+        assert "expected mysql to have a host child"
+
+        exists? instance tests.mysql.db2.database
+        assert "expected mysql to have a database child"
+
+        exists? instance tests.mysql.db2.username
+        assert "expected mysql to have a username child"
+
+        exists? instance tests.mysql.db2.password
+        assert "expected mysql to have a password child"
