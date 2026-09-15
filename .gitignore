@@ -10,6 +10,12 @@
 /test/version_tmp/
 /tmp/
 
+# Generated per-gem test user-root (logs/config/tmp/debug), created by
+# BaseTest#default_user_root the first time a gem's `rake test` runs.
+# Not committed fixture data - dev/gloo/test/gloo is the one exception
+# and lives in its own repo.
+**/test/gloo/
+
 # Used by dotenv library to load environment variables.
 # .env
 

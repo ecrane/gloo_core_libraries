@@ -3,11 +3,11 @@ require 'test_helper'
 class MenuItemTest < BaseEngineTest
 
   def test_the_typename
-    assert_equal 'menu_item', Gloo::Objs::MenuItem.typename
+    assert_equal 'menu_item', MenuItem.typename
   end
 
   def test_the_short_typename
-    assert_equal 'mitem', Gloo::Objs::MenuItem.short_typename
+    assert_equal 'mitem', MenuItem.short_typename
   end
 
   def test_find_type
@@ -16,13 +16,13 @@ class MenuItemTest < BaseEngineTest
   end
 
   def test_messages
-    msgs = Gloo::Objs::MenuItem.messages
+    msgs = MenuItem.messages
     assert msgs
     assert msgs.include?( 'unload' )
   end
 
   def test_adds_children_on_create
-    o = Gloo::Objs::MenuItem.new( @engine )
+    o = MenuItem.new( @engine )
     assert o.add_children_on_create?
   end
 

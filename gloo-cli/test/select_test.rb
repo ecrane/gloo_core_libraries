@@ -3,11 +3,11 @@ require 'test_helper'
 class SelectTest < BaseEngineTest
 
   def test_the_typename
-    assert_equal 'select', Gloo::Objs::Select.typename
+    assert_equal 'select', Select.typename
   end
 
   def test_the_short_typename
-    assert_equal 'sel', Gloo::Objs::Select.short_typename
+    assert_equal 'sel', Select.short_typename
   end
 
   def test_find_type
@@ -16,14 +16,14 @@ class SelectTest < BaseEngineTest
   end
 
   def test_messages
-    msgs = Gloo::Objs::Select.messages
+    msgs = Select.messages
     assert msgs
     assert msgs.include?( 'run' )
     assert msgs.include?( 'unload' )
   end
 
   def test_adds_children_on_create
-    o = Gloo::Objs::Select.new( @engine )
+    o = Select.new( @engine )
     assert o.add_children_on_create?
   end
 

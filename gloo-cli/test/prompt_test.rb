@@ -3,11 +3,11 @@ require 'test_helper'
 class PromptTest < BaseEngineTest
 
   def test_the_typename
-    assert_equal 'prompt', Gloo::Objs::Prompt.typename
+    assert_equal 'prompt', Prompt.typename
   end
 
   def test_the_short_typename
-    assert_equal 'ask', Gloo::Objs::Prompt.short_typename
+    assert_equal 'ask', Prompt.short_typename
   end
 
   def test_find_type
@@ -16,7 +16,7 @@ class PromptTest < BaseEngineTest
   end
 
   def test_messages
-    msgs = Gloo::Objs::Prompt.messages
+    msgs = Prompt.messages
     assert msgs
     assert msgs.include?( 'run' )
     assert msgs.include?( 'multiline' )
@@ -24,7 +24,7 @@ class PromptTest < BaseEngineTest
   end
 
   def test_adds_children_on_create
-    o = Gloo::Objs::Prompt.new( @engine )
+    o = Prompt.new( @engine )
     assert o.add_children_on_create?
   end
 

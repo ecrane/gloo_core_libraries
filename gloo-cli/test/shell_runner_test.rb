@@ -39,11 +39,6 @@ end
 
 class ShellRunnerTest < BaseEngineTest
 
-  def setup
-    super
-    @engine.lib_manager.load_lib 'cli'
-  end
-
   def test_single_command_false_by_default
     r = ShellRunner.new( @engine, FakeShellObj.new )
     refute r.single_command?

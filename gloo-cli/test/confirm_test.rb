@@ -3,27 +3,26 @@ require 'test_helper'
 class ConfirmTest < BaseEngineTest
 
   def test_the_typename
-    assert_equal 'confirm', Gloo::Objs::Confirm.typename
+    assert_equal 'confirm', CliConfirm.typename
   end
 
   def test_the_short_typename
-    assert_equal 'confirm', Gloo::Objs::Confirm.short_typename
+    assert_equal 'confirm', CliConfirm.short_typename
   end
 
   def test_find_type
-    assert @dic.find_obj( 'prompt' )
-    assert @dic.find_obj( 'ask' )
+    assert @dic.find_obj( 'confirm' )
   end
 
   def test_messages
-    msgs = Gloo::Objs::Confirm.messages
+    msgs = CliConfirm.messages
     assert msgs
     assert msgs.include?( 'run' )
     assert msgs.include?( 'unload' )
   end
 
   def test_adds_children_on_create
-    o = Gloo::Objs::Confirm.new( @engine )
+    o = CliConfirm.new( @engine )
     assert o.add_children_on_create?
   end
 

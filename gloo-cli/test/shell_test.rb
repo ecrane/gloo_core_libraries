@@ -6,11 +6,6 @@ require 'tmpdir'
 
 class ShellTest < BaseEngineTest
 
-  def setup
-    super
-    @engine.lib_manager.load_lib 'cli'
-  end
-
   def create_shell
     i = @engine.parser.parse_immediate 'create sh as shell'
     i.run
@@ -35,7 +30,6 @@ class ShellTest < BaseEngineTest
         Gloo::App::EngineContext.new(
           [ '--app', root, '--quiet', 'status' ], nil, nil, default_user_root ) )
       app_engine.start
-      app_engine.lib_manager.load_lib 'cli'
 
       i = app_engine.parser.parse_immediate 'create sh as shell'
       i.run
@@ -59,7 +53,6 @@ class ShellTest < BaseEngineTest
         Gloo::App::EngineContext.new(
           [ '--app', root, '--quiet', 'status' ], nil, nil, default_user_root ) )
       app_engine.start
-      app_engine.lib_manager.load_lib 'cli'
 
       i = app_engine.parser.parse_immediate 'create sh as shell'
       i.run
@@ -78,7 +71,6 @@ class ShellTest < BaseEngineTest
         Gloo::App::EngineContext.new(
           [ '--app', root, '--quiet', 'put', 'foo', 'bar' ], nil, nil, default_user_root ) )
       app_engine.start
-      app_engine.lib_manager.load_lib 'cli'
 
       i = app_engine.parser.parse_immediate 'create sh as shell'
       i.run
@@ -95,7 +87,6 @@ class ShellTest < BaseEngineTest
         Gloo::App::EngineContext.new(
           [ '--app', root, '--quiet', 'status' ], nil, nil, default_user_root ) )
       app_engine.start
-      app_engine.lib_manager.load_lib 'cli'
 
       i = app_engine.parser.parse_immediate 'create sh as shell'
       i.run
