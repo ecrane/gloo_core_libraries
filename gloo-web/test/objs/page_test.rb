@@ -4,11 +4,11 @@ require 'test_helper'
 class PageTest < BaseEngineTest
 
   def test_the_typename
-    assert_equal 'page', Gloo::Objs::Page.typename
+    assert_equal 'page', Objs::Page.typename
   end
 
   def test_the_short_typename
-    assert_equal 'page', Gloo::Objs::Page.short_typename
+    assert_equal 'page', Objs::Page.short_typename
   end
 
   def test_find_type
@@ -16,13 +16,13 @@ class PageTest < BaseEngineTest
   end
 
   def test_messages
-    msgs = Gloo::Objs::Page.messages
+    msgs = Objs::Page.messages
     assert msgs
     assert msgs.include?( 'render' )
   end
 
   def test_adds_children_on_create
-    o = Gloo::Objs::Page.new @engine
+    o = Objs::Page.new @engine
     assert o.add_children_on_create?
   end
 

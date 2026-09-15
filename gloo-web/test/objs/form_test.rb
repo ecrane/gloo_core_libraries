@@ -4,11 +4,11 @@ require 'test_helper'
 class FormTest < BaseEngineTest
 
   def test_the_typename
-    assert_equal 'form', Gloo::Objs::Form.typename
+    assert_equal 'form', Objs::Form.typename
   end
 
   def test_the_short_typename
-    assert_equal 'form', Gloo::Objs::Form.short_typename
+    assert_equal 'form', Objs::Form.short_typename
   end
 
   def test_find_type
@@ -17,13 +17,13 @@ class FormTest < BaseEngineTest
   end
 
   def test_messages
-    msgs = Gloo::Objs::Form.messages
+    msgs = Objs::Form.messages
     assert msgs
     assert msgs.include?( 'render' )
   end
 
   def test_adds_children_on_create
-    o = Gloo::Objs::Form.new @engine
+    o = Objs::Form.new @engine
     assert o.add_children_on_create?
   end
 

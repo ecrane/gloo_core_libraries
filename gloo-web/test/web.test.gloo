@@ -1,9 +1,11 @@
 #
-# Addition tests
+# Web Tests
 #
 
 tests [can] :
   web [can] :
+
+    rendered [string] :
 
     on_load [script] :
       load lib web
@@ -19,13 +21,13 @@ tests [can] :
 
         exists? object partial
         assert "partial object should exist"
-        
+
         exists? object server
         assert "server object should exist"
-        
+
         exists? object form
         assert "form object should exist"
-        
+
         exists? object field
         assert "field object should exist"
 
@@ -40,6 +42,29 @@ tests [can] :
         check ^^.s for responds_to? ('stop')
         assert 'expected the server to be able to stop'
 
+    server_default_children [test] :
+      description [string] : server default children include config, on_start/on_stop, and pages
+      on_test [script] :
+        create tests.web.s2 as server
+
+        exists? instance tests.web.s2.config
+        assert "expected server to have a config child"
+
+        exists? instance tests.web.s2.on_start
+        assert "expected server to have an on_start child"
+
+        exists? instance tests.web.s2.on_stop
+        assert "expected server to have an on_stop child"
+
+        exists? instance tests.web.s2.pages
+        assert "expected server to have a pages child"
+
+        eval tests.web.s2.config.scheme = 'http'
+        assert "expected server's default scheme to be 'http'"
+
+        eval tests.web.s2.config.port = '8080'
+        assert "expected server's default port to be '8080'"
+
     page_can_render [test] :
       description [string] : A web page can render
       on_test [script] :
@@ -52,3 +77,78 @@ tests [can] :
 
         check ^^.part for responds_to? ('render')
         assert 'expected a partial to be able to render'
+
+    page_default_children [test] :
+      description [string] : page default children include head and body elements
+      on_test [script] :
+        create tests.web.p2 as page
+
+        exists? instance tests.web.p2.head
+        assert "expected page to have a head child"
+
+        exists? instance tests.web.p2.body
+        assert "expected page to have a body child"
+
+        exists? instance tests.web.p2.params
+        assert "expected page to have a params child"
+
+    partial_default_children [test] :
+      description [string] : partial default children include content and params
+      on_test [script] :
+        create tests.web.part2 as partial
+
+        exists? instance tests.web.part2.content
+        assert "expected partial to have a content child"
+
+        exists? instance tests.web.part2.params
+        assert "expected partial to have a params child"
+
+    element_default_children [test] :
+      description [string] : element default children are attributes and content
+      on_test [script] :
+        create tests.web.e as element
+
+        exists? instance tests.web.e.attributes
+        assert "expected element to have an attributes child"
+
+        exists? instance tests.web.e.content
+        assert "expected element to have a content child"
+
+    element_renders_its_tag [test] :
+      description [string] : an element renders itself with its own name as the tag
+      on_test [script] :
+        create tests.web.div as e
+
+        tell tests.web.div to render
+        put it into tests.web.rendered
+
+        check tests.web.rendered for substring? ( '<div>' )
+        assert "expected the rendered element to open with its own name as the tag"
+
+        check tests.web.rendered for substring? ( '</div>' )
+        assert "expected the rendered element to close its own tag"
+
+    field_default_children [test] :
+      description [string] : field default children are name and type
+      on_test [script] :
+        create tests.web.f as field
+
+        exists? instance tests.web.f.name
+        assert "expected field to have a name child"
+
+        eval tests.web.f.type = 'text'
+        assert "expected field's default type to be 'text'"
+
+    form_default_children [test] :
+      description [string] : form default children are name, method, action, cancel_path, and content
+      on_test [script] :
+        create tests.web.form1 as form
+
+        exists? instance tests.web.form1.name
+        assert "expected form to have a name child"
+
+        eval tests.web.form1.method = 'post'
+        assert "expected form's default method to be 'post'"
+
+        exists? instance tests.web.form1.content
+        assert "expected form to have a content child"

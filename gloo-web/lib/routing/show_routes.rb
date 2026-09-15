@@ -48,7 +48,7 @@ module Routing
       can.children.each do |obj|
         if obj.class == Gloo::Objs::Container
           add_container_routes obj, "#{route_path}#{obj.name}#{SEGMENT_DIVIDER}"
-        elsif obj.class == Gloo::Objs::Page
+        elsif obj.class == Objs::Page
           route = "#{route_path}#{obj.name}"
           @found_routes << [ obj.name, obj.pn, route, WebSvr::WebMethod::GET ]
 

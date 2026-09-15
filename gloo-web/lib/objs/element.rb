@@ -233,7 +233,7 @@ module Objs
           end
         end
       else
-        rendered_obj_content << obj.value
+        rendered_obj_content << ( obj.value || '' )
       end
 
       return rendered_obj_content

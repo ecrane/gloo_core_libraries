@@ -7,7 +7,7 @@ class HandlerTest < BaseEngineTest
     o.run
     obj = @engine.heap.root.children.first
 
-    svr = Gloo::WebSvr::Handler.new @engine, obj
+    svr = WebSvr::Handler.new @engine, obj
     assert svr
     assert_equal obj, svr.server_obj
   end
