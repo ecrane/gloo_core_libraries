@@ -55,6 +55,20 @@ tests [can] :
         check ^^.db for responds_to? ('verify')
         assert 'expected sqlite to be able to verify'
 
+        check ^^.db for responds_to? ('unload')
+        assert 'expected sqlite to be able to unload'
+
+    default_children [test] :
+      description [string] : sqlite default children are database, defaulted to test.db
+      on_test [script] :
+        create tests.sqlite.db2 as sqlite
+
+        exists? instance tests.sqlite.db2.database
+        assert "expected sqlite to have a database child"
+
+        eval tests.sqlite.db2.database = 'test.db'
+        assert "expected sqlite's default database value to be 'test.db'"
+
     query_round_trip [test] :
       description [string] : create a table, insert rows, and select them back into a result container
       on_test [script] :
