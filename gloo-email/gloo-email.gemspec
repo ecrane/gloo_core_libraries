@@ -31,4 +31,20 @@ Gem::Specification.new do |spec|
   ]
 
   spec.require_paths = ['lib']
+
+  #
+  # Used for building/sending mail (Msg#get_mail, Smtp#send) and IMAP
+  # message parsing (EmailImap#process_message). Was never declared
+  # here even though lib/ already requires it directly - only worked
+  # because it happened to be installed as a side effect of something
+  # else.
+  #
+  spec.add_dependency 'mail'
+
+  #
+  # Development Dependencies
+  #
+  spec.add_development_dependency 'bundler'
+  spec.add_development_dependency 'minitest', '~> 5.1', '>= 5.14.2'
+  spec.add_development_dependency 'rake', '~> 13.0', '>= 13.0.1'
 end

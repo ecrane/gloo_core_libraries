@@ -1,0 +1,112 @@
+#
+# Gloo Email Tests
+#
+tests [can] :
+  gloo-email [can] :
+    lib_obj_verbs [can] :
+
+      on_load [script] :
+        load lib email
+
+      email_smtp_obj [test] :
+        description [string] : The email smtp object exists
+        on_test [script] :
+          exists? object email_smtp
+          assert "email smtp object should exist"
+
+      email_imap_obj [test] :
+        description [string] : The email imap object exists
+        on_test [script] :
+          exists? object email_imap
+          assert "email imap object should exist"
+
+      email_msg_obj [test] :
+        description [string] : The email msg object exists
+        on_test [script] :
+          exists? object email
+          assert "email msg object should exist"
+
+      #
+      # 'send' and 'fetch' are deliberately not exercised anywhere in
+      # this suite - they open real SMTP/IMAP connections. These
+      # tests only cover structure that's safe to check without a
+      # server: messages exist, default children exist.
+      #
+
+      email_smtp_messages [test] :
+        description [string] : email_smtp responds to send and unload
+        on_test [script] :
+          create tests.gloo-email.lib_obj_verbs.smtp as email_smtp
+
+          check ^^.smtp for responds_to? ('send')
+          assert "expected email_smtp to respond to send"
+
+          check ^^.smtp for responds_to? ('unload')
+          assert "expected email_smtp to respond to unload"
+
+      email_smtp_default_children [test] :
+        description [string] : email_smtp default children are server, port, username, and password
+        on_test [script] :
+          create tests.gloo-email.lib_obj_verbs.smtp2 as email_smtp
+
+          exists? instance tests.gloo-email.lib_obj_verbs.smtp2.server
+          assert "expected email_smtp to have a server child"
+
+          exists? instance tests.gloo-email.lib_obj_verbs.smtp2.port
+          assert "expected email_smtp to have a port child"
+
+          exists? instance tests.gloo-email.lib_obj_verbs.smtp2.username
+          assert "expected email_smtp to have a username child"
+
+          exists? instance tests.gloo-email.lib_obj_verbs.smtp2.password
+          assert "expected email_smtp to have a password child"
+
+      email_imap_messages [test] :
+        description [string] : email_imap responds to fetch and unload
+        on_test [script] :
+          create tests.gloo-email.lib_obj_verbs.imap as email_imap
+
+          check ^^.imap for responds_to? ('fetch')
+          assert "expected email_imap to respond to fetch"
+
+          check ^^.imap for responds_to? ('unload')
+          assert "expected email_imap to respond to unload"
+
+      email_imap_default_children [test] :
+        description [string] : email_imap default children include mailbox and messages
+        on_test [script] :
+          create tests.gloo-email.lib_obj_verbs.imap2 as email_imap
+
+          exists? instance tests.gloo-email.lib_obj_verbs.imap2.mailbox
+          assert "expected email_imap to have a mailbox child"
+
+          exists? instance tests.gloo-email.lib_obj_verbs.imap2.messages
+          assert "expected email_imap to have a messages child"
+
+      email_msg_messages [test] :
+        description [string] : email msg responds to send and unload
+        on_test [script] :
+          create tests.gloo-email.lib_obj_verbs.msg as email
+
+          check ^^.msg for responds_to? ('send')
+          assert "expected email msg to respond to send"
+
+          check ^^.msg for responds_to? ('unload')
+          assert "expected email msg to respond to unload"
+
+      email_msg_default_children [test] :
+        description [string] : email msg default children are to, from, subject, and body
+        on_test [script] :
+          create tests.gloo-email.lib_obj_verbs.msg2 as email
+
+          exists? instance tests.gloo-email.lib_obj_verbs.msg2.to
+          assert "expected email msg to have a to child"
+
+          exists? instance tests.gloo-email.lib_obj_verbs.msg2.from
+          assert "expected email msg to have a from child"
+
+          exists? instance tests.gloo-email.lib_obj_verbs.msg2.subject
+          assert "expected email msg to have a subject child"
+
+          exists? instance tests.gloo-email.lib_obj_verbs.msg2.body
+          assert "expected email msg to have a body child"
