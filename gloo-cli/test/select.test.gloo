@@ -1,0 +1,53 @@
+#
+# Select Tests
+#
+test [can] :
+  select [can] :
+
+    on_load [script] :
+      load lib cli
+
+    typename [test] :
+      description [string] : select typename is registered
+      on_test [script] :
+        exists? object select
+        assert "expected select typename to be registered"
+
+    short_typename [test] :
+      description [string] : select short typename is registered
+      on_test [script] :
+        exists? object sel
+        assert "expected select short typename (sel) to be registered"
+
+    messages [test] :
+      description [string] : select responds to expected messages
+      on_test [script] :
+        create test.select.s as sel
+        check ^^.s for responds_to? ('run')
+        assert "expected select to respond to run"
+
+        check ^^.s for responds_to? ('unload')
+        assert "expected select to respond to unload"
+
+    adds_children_on_create [test] :
+      description [string] : select adds default children when created
+      on_test [script] :
+        create test.select.s2 as sel
+        check ^^.s2 for contains?
+        assert "expected select to add default children on create"
+
+    default_children [test] :
+      description [string] : select default children are prompt, options, and result
+      on_test [script] :
+        create test.select.s3 as sel
+        exists? instance test.select.s3.prompt
+        assert "expected select to have a prompt child"
+
+        exists? instance test.select.s3.options
+        assert "expected select to have an options child"
+
+        exists? instance test.select.s3.result
+        assert "expected select to have a result child"
+
+        eval test.select.s3.prompt = '>'
+        assert "expected select's default prompt value to be '>'"

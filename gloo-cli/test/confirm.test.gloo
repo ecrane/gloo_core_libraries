@@ -1,0 +1,48 @@
+#
+# Confirm Tests
+#
+test [can] :
+  confirm [can] :
+
+    on_load [script] :
+      load lib cli
+
+    typename [test] :
+      description [string] : confirm typename is registered
+      on_test [script] :
+        exists? object confirm
+        assert "expected confirm typename to be registered"
+
+    messages [test] :
+      description [string] : confirm responds to expected messages
+      on_test [script] :
+        create test.confirm.c as confirm
+        check ^^.c for responds_to? ('run')
+        assert "expected confirm to respond to run"
+
+        check ^^.c for responds_to? ('unload')
+        assert "expected confirm to respond to unload"
+
+    adds_children_on_create [test] :
+      description [string] : confirm adds default children when created
+      on_test [script] :
+        create test.confirm.c2 as confirm
+        check ^^.c2 for contains?
+        assert "expected confirm to add default children on create"
+
+    default_children [test] :
+      description [string] : confirm default children are prompt and result
+      on_test [script] :
+        create test.confirm.c3 as confirm
+        exists? instance test.confirm.c3.prompt
+        assert "expected confirm to have a prompt child"
+
+        exists? instance test.confirm.c3.result
+        assert "expected confirm to have a result child"
+
+    default_prompt_value [test] :
+      description [string] : confirm's default prompt value is '> '
+      on_test [script] :
+        create test.confirm.c4 as confirm
+        eval test.confirm.c4.prompt = '> '
+        assert "expected confirm's default prompt to be '> '"

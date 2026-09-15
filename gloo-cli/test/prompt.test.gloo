@@ -1,0 +1,53 @@
+#
+# Prompt Tests
+#
+test [can] :
+  prompt [can] :
+
+    on_load [script] :
+      load lib cli
+
+    typename [test] :
+      description [string] : prompt typename is registered
+      on_test [script] :
+        exists? object prompt
+        assert "expected prompt typename to be registered"
+
+    short_typename [test] :
+      description [string] : prompt short typename is registered
+      on_test [script] :
+        exists? object ask
+        assert "expected prompt short typename (ask) to be registered"
+
+    messages [test] :
+      description [string] : prompt responds to expected messages
+      on_test [script] :
+        create test.prompt.p as ask
+        check ^^.p for responds_to? ('run')
+        assert "expected prompt to respond to run"
+
+        check ^^.p for responds_to? ('multiline')
+        assert "expected prompt to respond to multiline"
+
+        check ^^.p for responds_to? ('unload')
+        assert "expected prompt to respond to unload"
+
+    adds_children_on_create [test] :
+      description [string] : prompt adds default children when created
+      on_test [script] :
+        create test.prompt.p2 as ask
+        check ^^.p2 for contains?
+        assert "expected prompt to add default children on create"
+
+    default_children [test] :
+      description [string] : prompt default children are prompt and result
+      on_test [script] :
+        create test.prompt.p3 as ask
+        exists? instance test.prompt.p3.prompt
+        assert "expected prompt to have a prompt child"
+
+        exists? instance test.prompt.p3.result
+        assert "expected prompt to have a result child"
+
+        eval test.prompt.p3.prompt = '>'
+        assert "expected prompt's default prompt value to be '>'"

@@ -1,0 +1,57 @@
+#
+# Menu Tests
+#
+test [can] :
+  menu [can] :
+
+    on_load [script] :
+      load lib cli
+
+    typename [test] :
+      description [string] : menu typename is registered
+      on_test [script] :
+        exists? object menu
+        assert "expected menu typename to be registered"
+
+    messages [test] :
+      description [string] : menu responds to expected messages
+      on_test [script] :
+        create test.menu.m as menu
+        check ^^.m for responds_to? ('run')
+        assert "expected menu to respond to run"
+
+        check ^^.m for responds_to? ('unload')
+        assert "expected menu to respond to unload"
+
+    adds_children_on_create [test] :
+      description [string] : menu adds default children when created
+      on_test [script] :
+        create test.menu.m2 as menu
+        check ^^.m2 for contains?
+        assert "expected menu to add default children on create"
+
+    default_children [test] :
+      description [string] : menu default children are prompt, items, loop, and default
+      on_test [script] :
+        create test.menu.m3 as menu
+        exists? instance test.menu.m3.prompt
+        assert "expected menu to have a prompt child"
+
+        exists? instance test.menu.m3.items
+        assert "expected menu to have an items child"
+
+        exists? instance test.menu.m3.loop
+        assert "expected menu to have a loop child"
+
+        exists? instance test.menu.m3.default
+        assert "expected menu to have a default child"
+
+    default_prompt_and_loop_values [test] :
+      description [string] : menu defaults to prompt '> ' and loop true
+      on_test [script] :
+        create test.menu.m4 as menu
+        eval test.menu.m4.prompt = '> '
+        assert "expected menu's default prompt to be '> '"
+
+        eval test.menu.m4.loop = true
+        assert "expected menu's default loop value to be true"
