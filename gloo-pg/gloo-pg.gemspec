@@ -22,13 +22,20 @@ Gem::Specification.new do |spec|
   spec.files = [
     "README.md",
     "lib/gloo-pg.rb",
-    "lib/pg.rb"
+    "lib/pg_obj.rb"
   ]
 
   spec.require_paths = ['lib']
 
-  # 
+  #
   # Database specific dependencies
-  # 
+  #
   spec.add_dependency 'pg', '~> 1.5', '>= 1.5.3'
+
+  #
+  # Development Dependencies
+  #
+  spec.add_development_dependency 'bundler'
+  spec.add_development_dependency 'minitest', '~> 5.1', '>= 5.14.2'
+  spec.add_development_dependency 'rake', '~> 13.0', '>= 13.0.1'
 end
