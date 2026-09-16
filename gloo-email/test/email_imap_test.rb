@@ -24,6 +24,12 @@ class EmailImapTest < BaseEngineTest
     assert_equal EmailImap.typename, EmailImap.short_typename
   end
 
+  def test_doc_data
+    data = EmailImap.doc_data
+    assert_equal EmailImap.typename, data[ :name ]
+    assert_equal EmailImap.short_typename, data[ :shortcut ]
+  end
+
   def test_find_type
     assert @dic.find_obj( 'email_imap' )
   end

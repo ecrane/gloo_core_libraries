@@ -64,6 +64,12 @@ class MysqlTest < BaseEngineTest
     assert_equal 'mysql', Mysql.short_typename
   end
 
+  def test_doc_data
+    data = Mysql.doc_data
+    assert_equal Mysql.typename, data[ :name ]
+    assert_equal Mysql.short_typename, data[ :shortcut ]
+  end
+
   def test_find_type
     assert @dic.find_obj( 'mysql' )
     assert @dic.find_obj( 'MySQL' )

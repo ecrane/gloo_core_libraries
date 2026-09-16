@@ -22,6 +22,12 @@ class EmailMsgTest < BaseEngineTest
     assert_equal EmailMsg.typename, EmailMsg.short_typename
   end
 
+  def test_doc_data
+    data = EmailMsg.doc_data
+    assert_equal EmailMsg.typename, data[ :name ]
+    assert_equal EmailMsg.short_typename, data[ :shortcut ]
+  end
+
   def test_find_type
     assert @dic.find_obj( 'email' )
   end

@@ -11,6 +11,12 @@ class FieldTest < BaseEngineTest
     assert_equal 'field', Objs::Field.short_typename
   end
 
+  def test_doc_data
+    data = Objs::Field.doc_data
+    assert_equal Objs::Field.typename, data[ :name ]
+    assert_equal Objs::Field.short_typename, data[ :shortcut ]
+  end
+
   def test_find_type
     assert @dic.find_obj( 'field' )
     assert @dic.find_obj( 'FIELD' )

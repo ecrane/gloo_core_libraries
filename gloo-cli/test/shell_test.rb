@@ -6,6 +6,12 @@ require 'tmpdir'
 
 class ShellTest < BaseEngineTest
 
+  def test_doc_data
+    data = Shell.doc_data
+    assert_equal Shell.typename, data[ :name ]
+    assert_equal Shell.short_typename, data[ :shortcut ]
+  end
+
   def create_shell
     i = @engine.parser.parse_immediate 'create sh as shell'
     i.run

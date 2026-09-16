@@ -11,6 +11,12 @@ class SvrTest < BaseEngineTest
     assert_equal 'svr', Objs::Svr.short_typename
   end
 
+  def test_doc_data
+    data = Objs::Svr.doc_data
+    assert_equal Objs::Svr.typename, data[ :name ]
+    assert_equal Objs::Svr.short_typename, data[ :shortcut ]
+  end
+
   def test_find_type
     assert @dic.find_obj( 'server' )
     assert @dic.find_obj( 'svr' )

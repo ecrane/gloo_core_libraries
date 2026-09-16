@@ -11,6 +11,12 @@ class PageTest < BaseEngineTest
     assert_equal 'page', Objs::Page.short_typename
   end
 
+  def test_doc_data
+    data = Objs::Page.doc_data
+    assert_equal Objs::Page.typename, data[ :name ]
+    assert_equal Objs::Page.short_typename, data[ :shortcut ]
+  end
+
   def test_find_type
     assert @dic.find_obj( 'page' )
   end

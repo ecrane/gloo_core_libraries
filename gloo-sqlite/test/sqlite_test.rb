@@ -11,6 +11,12 @@ class SqliteTest < BaseEngineTest
     assert_equal 'sqlite', Sqlite.short_typename
   end
 
+  def test_doc_data
+    data = Sqlite.doc_data
+    assert_equal Sqlite.typename, data[ :name ]
+    assert_equal Sqlite.short_typename, data[ :shortcut ]
+  end
+
   def test_find_type
     assert @dic.find_obj( 'sqlite' )
     assert @dic.find_obj( 'SQLITE' )

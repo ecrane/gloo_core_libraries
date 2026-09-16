@@ -11,6 +11,12 @@ class FormTest < BaseEngineTest
     assert_equal 'form', Objs::Form.short_typename
   end
 
+  def test_doc_data
+    data = Objs::Form.doc_data
+    assert_equal Objs::Form.typename, data[ :name ]
+    assert_equal Objs::Form.short_typename, data[ :shortcut ]
+  end
+
   def test_find_type
     assert @dic.find_obj( 'form' )
     assert @dic.find_obj( 'FORM' )

@@ -24,6 +24,12 @@ class MdDocTest < BaseEngineTest
     assert_equal MdDoc.typename, MdDoc.short_typename
   end
 
+  def test_doc_data
+    data = MdDoc.doc_data
+    assert_equal MdDoc.typename, data[ :name ]
+    assert_equal MdDoc.short_typename, data[ :shortcut ]
+  end
+
   def test_find_type
     assert @dic.find_obj( 'md_doc' )
   end

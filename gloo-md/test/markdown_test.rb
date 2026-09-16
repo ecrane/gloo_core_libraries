@@ -10,6 +10,12 @@ class MarkdownTest < BaseEngineTest
     assert_equal 'md', Md.short_typename
   end
 
+  def test_doc_data
+    data = Md.doc_data
+    assert_equal Md.typename, data[ :name ]
+    assert_equal Md.short_typename, data[ :shortcut ]
+  end
+
   def test_find_type
     assert @dic.find_obj( 'markdown' )
     assert @dic.find_obj( 'MD' )

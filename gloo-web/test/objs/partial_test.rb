@@ -11,6 +11,12 @@ class PartialTest < BaseEngineTest
     assert_equal 'part', Objs::Partial.short_typename
   end
 
+  def test_doc_data
+    data = Objs::Partial.doc_data
+    assert_equal Objs::Partial.typename, data[ :name ]
+    assert_equal Objs::Partial.short_typename, data[ :shortcut ]
+  end
+
   def test_find_type
     assert @dic.find_obj( 'partial' )
     assert @dic.find_obj( 'part' )

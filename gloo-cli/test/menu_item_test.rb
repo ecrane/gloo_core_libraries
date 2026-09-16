@@ -10,6 +10,12 @@ class MenuItemTest < BaseEngineTest
     assert_equal 'mitem', MenuItem.short_typename
   end
 
+  def test_doc_data
+    data = MenuItem.doc_data
+    assert_equal MenuItem.typename, data[ :name ]
+    assert_equal MenuItem.short_typename, data[ :shortcut ]
+  end
+
   def test_find_type
     assert @dic.find_obj( 'menu_item' )
     assert @dic.find_obj( 'mitem' )

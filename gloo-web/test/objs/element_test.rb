@@ -11,6 +11,12 @@ class ElementTest < BaseEngineTest
     assert_equal 'e', Objs::Element.short_typename
   end
 
+  def test_doc_data
+    data = Objs::Element.doc_data
+    assert_equal Objs::Element.typename, data[ :name ]
+    assert_equal Objs::Element.short_typename, data[ :shortcut ]
+  end
+
   def test_find_type
     assert @dic.find_obj( 'element' )
     assert @dic.find_obj( 'e' )

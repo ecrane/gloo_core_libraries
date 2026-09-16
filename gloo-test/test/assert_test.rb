@@ -26,6 +26,12 @@ class AssertTest < BaseEngineTest
     assert_equal 'expect', Assert.keyword_shortcut
   end
 
+  def test_doc_data
+    data = Assert.doc_data
+    assert_equal Assert.keyword, data[ :name ]
+    assert_equal Assert.keyword_shortcut, data[ :shortcut ]
+  end
+
   def test_passes_when_it_is_true
     @engine.context_object = build_result
 

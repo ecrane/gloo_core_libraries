@@ -19,6 +19,12 @@ class TestTest < BaseEngineTest
     assert_equal Test.typename, Test.short_typename
   end
 
+  def test_doc_data
+    data = Test.doc_data
+    assert_equal Test.typename, data[ :name ]
+    assert_equal Test.short_typename, data[ :shortcut ]
+  end
+
   def test_find_type
     assert @dic.find_obj( 'test' )
   end

@@ -10,6 +10,12 @@ class ColorizeTest < BaseEngineTest
     assert_equal 'color', CliColorize.short_typename
   end
 
+  def test_doc_data
+    data = CliColorize.doc_data
+    assert_equal CliColorize.typename, data[ :name ]
+    assert_equal CliColorize.short_typename, data[ :shortcut ]
+  end
+
   def test_find_type
     assert @dic.find_obj( 'colorize' )
     assert @dic.find_obj( 'color' )

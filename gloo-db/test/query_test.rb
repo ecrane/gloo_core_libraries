@@ -40,6 +40,12 @@ class QueryTest < BaseEngineTest
     assert_equal 'sql', Query.short_typename
   end
 
+  def test_doc_data
+    data = Query.doc_data
+    assert_equal Query.typename, data[ :name ]
+    assert_equal Query.short_typename, data[ :shortcut ]
+  end
+
   def test_find_type
     assert @dic.find_obj( 'query' )
     assert @dic.find_obj( 'SQL' )

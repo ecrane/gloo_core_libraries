@@ -10,6 +10,12 @@ class SelectTest < BaseEngineTest
     assert_equal 'sel', Select.short_typename
   end
 
+  def test_doc_data
+    data = Select.doc_data
+    assert_equal Select.typename, data[ :name ]
+    assert_equal Select.short_typename, data[ :shortcut ]
+  end
+
   def test_find_type
     assert @dic.find_obj( 'select' )
     assert @dic.find_obj( 'SEL' )

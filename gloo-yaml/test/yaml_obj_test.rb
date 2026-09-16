@@ -30,6 +30,12 @@ class YamlObjTest < BaseEngineTest
     assert_equal 'yml', YamlObj.short_typename
   end
 
+  def test_doc_data
+    data = YamlObj.doc_data
+    assert_equal YamlObj.typename, data[ :name ]
+    assert_equal YamlObj.short_typename, data[ :shortcut ]
+  end
+
   def test_find_type
     assert @dic.find_obj( 'yaml' )
     assert @dic.find_obj( 'yml' )

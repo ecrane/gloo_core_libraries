@@ -10,6 +10,12 @@ class ConfirmTest < BaseEngineTest
     assert_equal 'confirm', CliConfirm.short_typename
   end
 
+  def test_doc_data
+    data = CliConfirm.doc_data
+    assert_equal CliConfirm.typename, data[ :name ]
+    assert_equal CliConfirm.short_typename, data[ :shortcut ]
+  end
+
   def test_find_type
     assert @dic.find_obj( 'confirm' )
   end

@@ -10,6 +10,12 @@ class PromptTest < BaseEngineTest
     assert_equal 'ask', Prompt.short_typename
   end
 
+  def test_doc_data
+    data = Prompt.doc_data
+    assert_equal Prompt.typename, data[ :name ]
+    assert_equal Prompt.short_typename, data[ :shortcut ]
+  end
+
   def test_find_type
     assert @dic.find_obj( 'prompt' )
     assert @dic.find_obj( 'ask' )

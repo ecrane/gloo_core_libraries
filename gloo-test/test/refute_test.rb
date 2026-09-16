@@ -24,6 +24,12 @@ class RefuteTest < BaseEngineTest
     assert_equal 'expect_not', Refute.keyword_shortcut
   end
 
+  def test_doc_data
+    data = Refute.doc_data
+    assert_equal Refute.keyword, data[ :name ]
+    assert_equal Refute.keyword_shortcut, data[ :shortcut ]
+  end
+
   def test_passes_when_it_is_false
     @engine.context_object = build_result
 
