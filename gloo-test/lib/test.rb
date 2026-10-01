@@ -6,6 +6,8 @@ class Test < Gloo::Core::Obj
   KEYWORD = 'test'.freeze
   TEST_DESC = 'description'.freeze
   ON_TEST_EVENT = 'on_test'.freeze
+  EXPECT_ERRORS = 'expect_errors'.freeze
+  EXPECT_FAIL = 'expect_fail'.freeze
 
 
   #
@@ -29,6 +31,30 @@ class Test < Gloo::Core::Obj
   def test_desc
     o = find_child TEST_DESC
     return o ? o.value : 'Unknown'
+  end
+
+  #
+  # Does the test trigger errors or warnings on purpose?
+  # Set with an optional expect_errors [bool] child.
+  #
+  def expect_errors?
+    return flag_set?( EXPECT_ERRORS )
+  end
+
+  #
+  # Is the test meant to fail?
+  # Set with an optional expect_fail [bool] child.
+  #
+  def expect_fail?
+    return flag_set?( EXPECT_FAIL )
+  end
+
+  #
+  # Is the named bool child present and true?
+  #
+  def flag_set?( name )
+    o = find_child name
+    return o ? o.value == true : false
   end
 
 
@@ -69,9 +95,18 @@ class Test < Gloo::Core::Obj
   #
   def run_test
     result = Result.new( @engine, self )
+    errors_before = @engine.log.error_count
+    warnings_before = @engine.log.warning_count
+
     @engine.context_object = result
     run_on_test
     @engine.context_object = nil
+
+    # Record what this test logged, for the run's summary.
+    result.error_count = @engine.log.error_count - errors_before
+    result.warning_count = @engine.log.warning_count - warnings_before
+    result.expect_errors = expect_errors?
+    result.expect_failure if expect_fail?
 
     result.show_result_symbol
 
@@ -102,7 +137,9 @@ class Test < Gloo::Core::Obj
       :description => 'A single gloo test.',
       :children => [
         'description (string) — A textual description of the test and desired outcome, used in output if there is an error.',
-        'on_test (script) — The script to run when the test is executed. Note that the normal way to run tests is with gloo --test.'
+        'on_test (script) — The script to run when the test is executed. Note that the normal way to run tests is with gloo --test.',
+        'expect_errors (bool) — Optional. Set to true for a test that triggers errors or warnings on purpose (eg. to check on_error); they are left out of the summary of what was logged during the run.',
+        'expect_fail (bool) — Optional. Set to true for a test that is meant to fail: it passes if at least one assertion fails, and fails if none does. It can\'t tell which assertion failed, or why, so keep such a test to the one thing it checks.'
       ],
       :examples => <<~EXAMPLES.strip
         #

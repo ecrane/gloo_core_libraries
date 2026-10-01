@@ -45,8 +45,7 @@ class TestFiles
       elsif File.exist?( f )
         add( f )
       else
-        # TODO: Show error
-        puts "Test file does not exist: #{f}"
+        @engine.err Gloo::Core::NotFound.file( f )
       end
     end
   end

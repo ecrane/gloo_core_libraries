@@ -80,6 +80,8 @@ class Results
     delta = duration.round( 2 )
     puts
     puts get_result_summary
+    logged = get_logged_summary
+    puts theme.warn( logged ) if logged
     puts theme.emphasis( "Tests finished in #{delta} seconds" )
     puts
   end
@@ -112,6 +114,71 @@ class Results
     end
     str += theme.accent( "\n  Assertions: #{@assert_count} • Files: #{@file_count}" )
     return str
+  end
+
+  # ---------------------------------------------------------------------
+  #    Logged Errors and Warnings
+  # ---------------------------------------------------------------------
+
+  #
+  # Get a summary of the errors and warnings logged during the run
+  # that no test declared (with expect_errors), naming the tests that
+  # logged them. Returns nil when there's nothing unexpected.
+  # Counts are since the log's counts were last reset (the runner
+  # resets them just before running the tests).
+  #
+  def get_logged_summary
+    unexpected = @all_results.select( &:unexpected_logs? )
+    outside_errors, outside_warnings = logged_outside_tests
+
+    errors = unexpected.sum( &:error_count ) + outside_errors
+    warnings = unexpected.sum( &:warning_count ) + outside_warnings
+    return nil if ( errors + warnings ).zero?
+
+    lines = [ "  #{count_phrase( errors, warnings )} logged during the run; see #{log_path}" ]
+    unexpected.each do |r|
+      lines << "    #{r.pn} (#{count_phrase( r.error_count, r.warning_count )})"
+    end
+    if ( outside_errors + outside_warnings ).positive?
+      lines << "    (outside tests: #{count_phrase( outside_errors, outside_warnings )})"
+    end
+    return lines.join( "\n" )
+  end
+
+  #
+  # Get the errors and warnings logged outside any test (eg. while
+  # loading a test file): everything logged less what the tests logged.
+  #
+  def logged_outside_tests
+    log = @engine.log
+    errors = log.error_count - @all_results.sum( &:error_count )
+    warnings = log.warning_count - @all_results.sum( &:warning_count )
+    return [ errors, warnings ]
+  end
+
+  #
+  # Describe a count of errors and warnings, eg. "1 error",
+  # "2 warnings", or "2 errors and 1 warning". Zero counts are left out.
+  #
+  def count_phrase( errors, warnings )
+    parts = []
+    parts << pluralize( errors, 'error' ) if errors.positive?
+    parts << pluralize( warnings, 'warning' ) if warnings.positive?
+    return parts.join( ' and ' )
+  end
+
+  #
+  # A count with its noun, plural unless the count is one.
+  #
+  def pluralize( count, noun )
+    return count == 1 ? "1 #{noun}" : "#{count} #{noun}s"
+  end
+
+  #
+  # The error log's path, with the home folder shown as ~.
+  #
+  def log_path
+    return @engine.log.err_file.sub( /\A#{Regexp.escape( Dir.home )}/, '~' )
   end
 
 end

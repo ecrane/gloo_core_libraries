@@ -66,6 +66,21 @@ class TestFilesTest < BaseEngineTest
     end
   end
 
+  #
+  # A test file that doesn't exist is reported as a runtime error,
+  # and isn't added.
+  #
+  def test_use_input_files_reports_a_missing_file_as_an_error
+    path = '/no/such/folder/missing.test.gloo'
+    files = TestFiles.new( @engine, [ path ] )
+    capture_io { files.detect_files }
+
+    assert_equal 0, files.count
+    assert @engine.error?
+    assert_equal Gloo::Core::Error::RUNTIME, @engine.heap.error.kind
+    assert_equal Gloo::Core::NotFound.file( path ), @engine.heap.error.value
+  end
+
   def test_randomize_keeps_the_same_files_present
     files = TestFiles.new( @engine, [] )
     files.add( 'a.test.gloo' )

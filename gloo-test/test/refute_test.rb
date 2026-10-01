@@ -89,4 +89,24 @@ class RefuteTest < BaseEngineTest
     assert @engine.context_object.passed
   end
 
+  #
+  # A failing refute followed by a passing one still fails the test.
+  #
+  def test_a_later_pass_does_not_hide_an_earlier_failure
+    @engine.context_object = build_result
+
+    i = @engine.parser.parse_immediate 'eval true'
+    i.run
+    i = @engine.parser.parse_immediate "refute 'first refutation fails'"
+    i.run
+    i = @engine.parser.parse_immediate 'eval false'
+    i.run
+    i = @engine.parser.parse_immediate 'refute'
+    i.run
+
+    refute @engine.context_object.passed
+    msg = @engine.context_object.instance_variable_get( :@failure_msg )
+    assert_includes msg, 'first refutation fails'
+  end
+
 end

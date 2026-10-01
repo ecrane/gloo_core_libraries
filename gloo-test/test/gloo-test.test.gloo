@@ -34,3 +34,65 @@ tests [can] :
         on_test [script] :
           eval false
           refute "expected refute to pass when it is false"
+
+      expect_passes_on_a_true_value [test] :
+        description [string] : expect, the short form of assert, passes when it is true
+        on_test [script] :
+          eval true
+          expect "expected expect to pass when it is true"
+
+      expect_not_passes_on_a_false_value [test] :
+        description [string] : expect_not, the short form of refute, passes when it is false
+        on_test [script] :
+          eval false
+          expect_not "expected expect_not to pass when it is false"
+
+    # Tests that are meant to fail (expect_fail): each checks one way an
+    # assertion fails, and passes only if that assertion did fail.
+    failing_assertions [can] :
+
+      assert_fails_on_a_false_value [test] :
+        description [string] : assert fails when it is false
+        expect_fail [bool] : true
+        on_test [script] :
+          eval false
+          assert "fails on purpose"
+
+      refute_fails_on_a_true_value [test] :
+        description [string] : refute fails when it is true
+        expect_fail [bool] : true
+        on_test [script] :
+          eval true
+          refute "fails on purpose"
+
+      expect_fails_on_a_false_value [test] :
+        description [string] : expect fails when it is false
+        expect_fail [bool] : true
+        on_test [script] :
+          eval false
+          expect "fails on purpose"
+
+      expect_not_fails_on_a_true_value [test] :
+        description [string] : expect_not fails when it is true
+        expect_fail [bool] : true
+        on_test [script] :
+          eval true
+          expect_not "fails on purpose"
+
+      a_later_assert_does_not_hide_a_failure [test] :
+        description [string] : a failing assert followed by a passing one still fails the test
+        expect_fail [bool] : true
+        on_test [script] :
+          eval false
+          assert "fails on purpose"
+          eval true
+          assert "passes, but must not hide the failure above"
+
+      a_later_refute_does_not_hide_a_failure [test] :
+        description [string] : a failing refute followed by a passing one still fails the test
+        expect_fail [bool] : true
+        on_test [script] :
+          eval true
+          refute "fails on purpose"
+          eval false
+          refute "passes, but must not hide the failure above"

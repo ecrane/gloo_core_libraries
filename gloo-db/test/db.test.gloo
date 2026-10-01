@@ -45,7 +45,7 @@ tests [can] :
       on_test [script] :
         create tests.db.q2 as query
 
-        exists? instance tests.db.q2.database
+        exists? instance tests.db.q2.database*
         assert "expected query to have a database child"
 
         exists? instance tests.db.q2.sql

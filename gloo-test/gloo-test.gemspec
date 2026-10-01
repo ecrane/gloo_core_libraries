@@ -35,6 +35,12 @@ Gem::Specification.new do |spec|
   spec.require_paths = ['lib']
 
   #
+  # Uses gloo 7.0's log counts (error_count, warning_count, reset_counts)
+  # and NotFound wording
+  #
+  spec.add_dependency 'gloo', '>= 7.0'
+
+  #
   # Development Dependencies
   #
   spec.add_development_dependency 'bundler'

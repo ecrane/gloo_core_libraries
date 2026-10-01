@@ -21,3 +21,44 @@ tests [can] :
 
           # check ^^.t for responds_to? ('run')
           # assert 'expected a test to be able to run'
+
+    # A test that triggers an error on purpose and says so with
+    # expect_errors; the run's summary of logged errors leaves it out.
+    expect_errors [can] :
+      err_fired [bool] : false
+      num [int] : 0
+      on_error [script] :
+        put true into ^.err_fired
+
+      deliberate_error_is_expected [test] :
+        description [string] : A test with expect_errors can trigger an error on purpose
+        expect_errors [bool] : true
+        on_test [script] :
+          put false into ^^.err_fired
+          show ^^.no_such_value
+          eval ^^.err_fired = true
+          assert "expected the deliberate error to fire on_error"
+
+      deliberate_warning_is_expected [test] :
+        description [string] : expect_errors covers warnings too
+        expect_errors [bool] : true
+        on_test [script] :
+          put 'x' into ^^.num
+          eval true
+          assert "a bad value is a warning, which expect_errors leaves out"
+
+      several_deliberate_errors_are_expected [test] :
+        description [string] : expect_errors covers every error the test logs
+        expect_errors [bool] : true
+        on_test [script] :
+          show ^^.no_such_value
+          show ^^.no_such_value
+          eval ^^.err_fired = true
+          assert "expected the deliberate errors to fire on_error"
+
+      expect_errors_without_errors_passes [test] :
+        description [string] : a test marked expect_errors that logs nothing still passes
+        expect_errors [bool] : true
+        on_test [script] :
+          eval true
+          assert "expected the marker to be harmless"

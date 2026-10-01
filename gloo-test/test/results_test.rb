@@ -72,4 +72,89 @@ class ResultsTest < BaseEngineTest
     assert_includes summary, 'Assertions: 2'
   end
 
+  #
+  # Build a result that logged the given errors and warnings.
+  #
+  def build_logged_result( errors: 0, warnings: 0, expect_errors: false )
+    result = build_result( passed: true )
+    result.error_count = errors
+    result.warning_count = warnings
+    result.expect_errors = expect_errors
+    return result
+  end
+
+  #
+  # Log the given number of errors and warnings, as the tests would have.
+  #
+  def log_counts( errors: 0, warnings: 0 )
+    capture_io do
+      errors.times { @engine.log.error 'an error' }
+      warnings.times { @engine.log.warn 'a warning' }
+    end
+  end
+
+  #
+  # Nothing logged: no summary.
+  #
+  def test_logged_summary_is_nil_when_nothing_was_logged
+    @engine.log.reset_counts
+    results = Results.new( @engine )
+    results.add_result( build_logged_result )
+
+    assert_nil results.get_logged_summary
+  end
+
+  #
+  # A test that logged errors is named, with the counts and the log path.
+  #
+  def test_logged_summary_names_the_test_that_logged
+    @engine.log.reset_counts
+    log_counts( errors: 2, warnings: 1 )
+    results = Results.new( @engine )
+    result = build_logged_result( errors: 2, warnings: 1 )
+    results.add_result( result )
+
+    summary = results.get_logged_summary
+    assert_includes summary, '2 errors and 1 warning logged during the run'
+    assert_includes summary, File.basename( @engine.log.err_file )
+    assert_includes summary, "#{result.pn} (2 errors and 1 warning)"
+    refute_includes summary, 'outside tests'
+  end
+
+  #
+  # Errors in a test that expects them leave no summary.
+  #
+  def test_logged_summary_leaves_out_expected_errors
+    @engine.log.reset_counts
+    log_counts( errors: 3 )
+    results = Results.new( @engine )
+    results.add_result( build_logged_result( errors: 3, expect_errors: true ) )
+
+    assert_nil results.get_logged_summary
+  end
+
+  #
+  # Errors logged outside any test get their own line.
+  #
+  def test_logged_summary_reports_errors_outside_tests
+    @engine.log.reset_counts
+    log_counts( errors: 1 )
+    results = Results.new( @engine )
+    results.add_result( build_logged_result )
+
+    summary = results.get_logged_summary
+    assert_includes summary, '1 error logged during the run'
+    assert_includes summary, '(outside tests: 1 error)'
+  end
+
+  #
+  # Counts read naturally: singular, plural, and zero parts left out.
+  #
+  def test_count_phrase_wording
+    results = Results.new( @engine )
+    assert_equal '1 error', results.count_phrase( 1, 0 )
+    assert_equal '2 warnings', results.count_phrase( 0, 2 )
+    assert_equal '2 errors and 1 warning', results.count_phrase( 2, 1 )
+  end
+
 end

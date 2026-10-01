@@ -20,6 +20,9 @@ class TestRunner
   # Execute all tests and display results.
   #
   def run
+    # Count only what's logged from here on, not loading gloo-test.
+    # Before setup, so a missing test file is counted.
+    @engine.log.reset_counts
     setup
 
     @results.start_timer    

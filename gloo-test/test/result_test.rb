@@ -44,4 +44,55 @@ class ResultTest < BaseEngineTest
     refute result.passed
   end
 
+  #
+  # A new result has logged nothing.
+  #
+  def test_starts_with_nothing_logged
+    result = Result.new( @engine, create_test_obj )
+    assert_equal 0, result.error_count
+    assert_equal 0, result.warning_count
+    refute result.expect_errors
+    refute result.unexpected_logs?
+  end
+
+  #
+  # Errors or warnings the test didn't declare are unexpected.
+  #
+  def test_unexpected_logs_when_errors_or_warnings_were_logged
+    result = Result.new( @engine, create_test_obj )
+    result.warning_count = 1
+    assert result.unexpected_logs?
+  end
+
+  #
+  # Errors in a test that expects them aren't unexpected.
+  #
+  def test_no_unexpected_logs_when_the_test_expects_errors
+    result = Result.new( @engine, create_test_obj )
+    result.error_count = 2
+    result.expect_errors = true
+    refute result.unexpected_logs?
+  end
+
+  #
+  # A test meant to fail passes when an assertion failed.
+  #
+  def test_expect_failure_passes_a_failed_result
+    result = Result.new( @engine, create_test_obj )
+    result.passed = false
+    result.expect_failure
+    assert result.passed
+  end
+
+  #
+  # A test meant to fail fails, with a message, when nothing failed.
+  #
+  def test_expect_failure_fails_a_passed_result
+    result = Result.new( @engine, create_test_obj )
+    result.expect_failure
+    refute result.passed
+    msg = result.instance_variable_get( :@failure_msg )
+    assert_includes msg, Result::EXPECTED_FAIL_MSG
+  end
+
 end

@@ -104,4 +104,40 @@ class AssertTest < BaseEngineTest
     assert_equal 3, @engine.context_object.assert_count
   end
 
+  #
+  # A failing assert followed by a passing one still fails the test.
+  #
+  def test_a_later_pass_does_not_hide_an_earlier_failure
+    @engine.context_object = build_result
+
+    i = @engine.parser.parse_immediate 'eval false'
+    i.run
+    i = @engine.parser.parse_immediate "assert 'first assertion fails'"
+    i.run
+    i = @engine.parser.parse_immediate 'eval true'
+    i.run
+    i = @engine.parser.parse_immediate 'assert'
+    i.run
+
+    refute @engine.context_object.passed
+    msg = @engine.context_object.instance_variable_get( :@failure_msg )
+    assert_includes msg, 'first assertion fails'
+  end
+
+  #
+  # A failing refute followed by a passing assert still fails the test.
+  #
+  def test_a_later_assert_does_not_hide_an_earlier_refute_failure
+    @engine.context_object = build_result
+
+    i = @engine.parser.parse_immediate 'eval true'
+    i.run
+    i = @engine.parser.parse_immediate 'refute'
+    i.run
+    i = @engine.parser.parse_immediate 'assert'
+    i.run
+
+    refute @engine.context_object.passed
+  end
+
 end

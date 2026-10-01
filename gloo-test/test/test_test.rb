@@ -86,4 +86,104 @@ class TestTest < BaseEngineTest
     assert_nil @engine.context_object
   end
 
+  #
+  # A test doesn't expect errors unless it says so.
+  #
+  def test_expect_errors_is_false_without_the_child
+    t = create_test
+    refute t.expect_errors?
+  end
+
+  #
+  # An expect_errors child set to true marks the test.
+  #
+  def test_expect_errors_reads_the_child
+    t = create_test
+    @engine.factory.create_bool( 'expect_errors', true, t )
+    assert t.expect_errors?
+  end
+
+  #
+  # run_test records how many errors the test's script logged.
+  #
+  def test_run_test_counts_the_errors_the_test_logged
+    t = create_test
+    o = t.find_child( 'on_test' )
+    o.add_line( 'shwo "a mistyped verb"' )
+    o.add_line( 'eval true' )
+    o.add_line( 'assert' )
+
+    result = nil
+    capture_io { result = t.run_test }
+    assert result.passed
+    assert_equal 1, result.error_count
+    assert_equal 0, result.warning_count
+    refute result.expect_errors
+  end
+
+  #
+  # Errors logged before the test ran aren't counted against it.
+  #
+  def test_run_test_counts_only_what_the_test_logged
+    @engine.log.error 'logged before the test'
+    t = create_test
+
+    result = nil
+    capture_io { result = t.run_test }
+    assert_equal 0, result.error_count
+  end
+
+  #
+  # run_test records that the test expects errors.
+  #
+  def test_run_test_records_expect_errors
+    t = create_test
+    @engine.factory.create_bool( 'expect_errors', true, t )
+
+    result = nil
+    capture_io { result = t.run_test }
+    assert result.expect_errors
+  end
+
+  #
+  # A test isn't meant to fail unless it says so.
+  #
+  def test_expect_fail_is_false_without_the_child
+    t = create_test
+    refute t.expect_fail?
+  end
+
+  #
+  # A failing assert followed by a passing one, in a test meant to
+  # fail, passes the test.
+  #
+  def test_run_test_passes_an_expected_failure
+    t = create_test
+    @engine.factory.create_bool( 'expect_fail', true, t )
+    o = t.find_child( 'on_test' )
+    o.add_line( 'eval false' )
+    o.add_line( 'assert' )
+    o.add_line( 'eval true' )
+    o.add_line( 'assert' )
+
+    result = nil
+    capture_io { result = t.run_test }
+    assert result.passed
+  end
+
+  #
+  # A test meant to fail whose assertions all pass fails.
+  #
+  def test_run_test_fails_an_expected_failure_that_passed
+    t = create_test
+    @engine.factory.create_bool( 'expect_fail', true, t )
+    o = t.find_child( 'on_test' )
+    o.add_line( 'eval true' )
+    o.add_line( 'assert' )
+
+    result = nil
+    capture_io { result = t.run_test }
+    refute result.passed
+  end
+
 end
