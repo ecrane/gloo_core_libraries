@@ -10,6 +10,8 @@ tests [can] :
     html [text] :
     note_src_file [file] :
     note_src [markdown] :
+    ext_src_file [file] :
+    ext_src [markdown] :
 
     md_object [test] :
       description [string] : The md object exists
@@ -31,17 +33,32 @@ tests [can] :
         assert 'expected md to be able to show'
 
     render_to_html [test] :
-      description [string] : render converts markdown to HTML, into the dst object and into it
+      description [string] : render with a destination puts the HTML there and true in it
       on_test [script] :
         # a path inside ( ) params must be absolute, not a ^ ref
         put '# Title' into ^^.src
         tell ^^.src to render ( tests.md.html )
-
-        eval it = ^^.html
-        assert "expected the rendered HTML to be in it"
+        assert "expected render with a destination to put true in it"
 
         check ^^.html for substring? ( "<h1>Title</h1>" )
         assert "expected the dst object to hold the rendered HTML"
+
+    render_without_a_destination [test] :
+      description [string] : render with no destination puts the HTML in it
+      on_test [script] :
+        put '# Title' into ^^.src
+        tell ^^.src to render
+        put it into ^^.html
+        check ^^.html for substring? ( "<h1>Title</h1>" )
+        assert "expected the rendered HTML to be in it"
+
+    render_to_a_missing_destination [test] :
+      description [string] : render to a destination that doesn't exist is an error and puts false in it
+      expect_errors [bool] : true
+      on_test [script] :
+        put '# Title' into ^^.src
+        tell ^^.src to render ( tests.md.no_such_object )
+        refute "expected render to a missing destination to put false in it"
 
     render_inline_markdown [test] :
       description [string] : common inline markdown renders
@@ -77,3 +94,25 @@ tests [can] :
 
         check ^^.html for substring? ( "After." )
         assert "expected markdown after the extension block to still render"
+
+    unknown_extension_is_kept [test] :
+      description [string] : an unknown extension is kept as plain text, with a warning
+      expect_errors [bool] : true
+      on_test [script] :
+        put '/Users/ecrane/dev/gloo_core_libraries/gloo-md/test/fixtures/unknown_extension.md' into ^^.ext_src_file
+        tell ^^.ext_src_file to read ( tests.md.ext_src )
+        tell ^^.ext_src to render ( tests.md.html )
+
+        check ^^.html for substring? ( "Kept content." )
+        assert "expected the unknown extension's content to be kept"
+
+    extension_at_the_end_renders [test] :
+      description [string] : an extension block that ends the text, with no blank line after it, still renders
+      on_test [script] :
+        put '/Users/ecrane/dev/gloo_core_libraries/gloo-md/test/fixtures/trailing_note.md' into ^^.ext_src_file
+        tell ^^.ext_src_file to read ( tests.md.ext_src )
+        tell ^^.ext_src to render ( tests.md.html )
+
+        check ^^.html for substring? ( "The last thing in the file." )
+        assert "expected the final note block to render"
+

@@ -35,6 +35,11 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'redcarpet', '~> 3.6.0'
 
   #
+  # Uses gloo 7.0's NotFound wording and warnings
+  #
+  spec.add_dependency 'gloo', '>= 7.0'
+
+  #
   # Development Dependencies
   #
   spec.add_development_dependency 'bundler'

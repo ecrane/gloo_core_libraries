@@ -72,21 +72,144 @@ class MdDocTest < BaseEngineTest
     assert_includes body, 'This is the body of the test document.'
   end
 
-  def test_read_with_a_blank_path_does_nothing
+  #
+  # Reading a second file replaces the frontmatter children with
+  # exactly that file's keys.
+  #
+  def test_read_drops_frontmatter_keys_from_an_earlier_read
     d = create_doc
+    d.find_child( 'path' ).set_value( fixture_path )
+    d.msg_read
+    d.find_child( 'path' ).set_value( fixture( 'other_doc.md' ) )
     d.msg_read
 
     fm = d.find_child( 'frontmatter' )
-    assert_equal 0, fm.child_count
+    assert_equal 'Other Document', fm.find_child( 'title' ).value
+    assert_nil fm.find_child( 'state' )
+    assert_equal 1, fm.child_count
   end
 
-  def test_read_with_a_missing_file_logs_and_returns_without_raising
-    d = create_doc
-    d.find_child( 'path' ).set_value( '/tmp/does_not_exist_gloo_md_doc.md' )
+  #
+  # Path to a fixture in the test fixtures folder.
+  #
+  def fixture( name )
+    return File.expand_path( File.join( __dir__, 'fixtures', name ) )
+  end
 
-    d.msg_read # should not raise
-    fm = d.find_child( 'frontmatter' )
-    assert_equal 0, fm.child_count
+  #
+  # A successful read puts true in it.
+  #
+  def test_read_puts_true_in_it
+    d = create_doc
+    d.find_child( 'path' ).set_value( fixture_path )
+    d.msg_read
+
+    assert_equal true, @engine.heap.it.value
+    refute @engine.error?
+  end
+
+  #
+  # A blank path is a runtime error; it is false and nothing changes.
+  #
+  def test_read_with_a_blank_path_is_an_error
+    d = create_doc
+    d.msg_read
+
+    assert @engine.error?
+    assert_equal Gloo::Core::Error::RUNTIME, @engine.heap.error.kind
+    assert_includes @engine.heap.error.value, 'has no path'
+    assert_equal false, @engine.heap.it.value
+    assert_equal 0, d.find_child( 'frontmatter' ).child_count
+  end
+
+  #
+  # A missing file is reported with the shared not-found wording.
+  #
+  def test_read_with_a_missing_file_is_an_error
+    path = '/tmp/does_not_exist_gloo_md_doc.md'
+    d = create_doc
+    d.find_child( 'path' ).set_value( path )
+    d.msg_read
+
+    assert_equal Gloo::Core::NotFound.file( path ), @engine.heap.error.value
+    assert_equal false, @engine.heap.it.value
+    assert_equal 0, d.find_child( 'frontmatter' ).child_count
+  end
+
+  #
+  # A date in the frontmatter reads as a string child.
+  #
+  def test_read_turns_a_date_into_a_string_child
+    d = create_doc
+    d.find_child( 'path' ).set_value( fixture( 'dated_doc.md' ) )
+    d.msg_read
+
+    refute @engine.error?
+    assert_equal '2026-10-01', d.find_child( 'frontmatter' ).find_child( 'date' ).value
+  end
+
+  #
+  # A time in the frontmatter reads as a string child.
+  #
+  def test_read_turns_a_time_into_a_string_child
+    Dir.mktmpdir do |dir|
+      path = File.join( dir, 'timed.md' )
+      File.write( path, "---\nat: 2026-10-01 09:30:00\n---\nBody.\n" )
+      d = create_doc
+      d.find_child( 'path' ).set_value( path )
+      d.msg_read
+
+      refute @engine.error?
+      assert_equal '2026-10-01 09:30:00 UTC', d.find_child( 'frontmatter' ).find_child( 'at' ).value
+    end
+  end
+
+  #
+  # Writing back an unchanged time keeps it as a YAML time, not a string.
+  #
+  def test_write_keeps_an_unchanged_time_as_written
+    Dir.mktmpdir do |dir|
+      path = File.join( dir, 'timed.md' )
+      File.write( path, "---\ntitle: Timed\nat: 2026-10-01 09:30:00\n---\nBody.\n" )
+      d = create_doc
+      d.find_child( 'path' ).set_value( path )
+      d.msg_read
+      d.find_child( 'frontmatter' ).find_child( 'title' ).set_value( 'Changed' )
+      d.msg_write
+
+      content = File.read( path )
+      refute_includes content, "'2026-10-01"
+      assert_includes content, "at: 2026-10-01 09:30:00\n"
+    end
+  end
+
+  #
+  # Invalid frontmatter YAML is a runtime error; it is false.
+  #
+  def test_read_with_invalid_frontmatter_is_an_error
+    d = create_doc
+    d.find_child( 'path' ).set_value( fixture( 'bad_frontmatter.md' ) )
+    d.msg_read
+
+    assert @engine.error?
+    assert_includes @engine.heap.error.value, "isn't valid YAML"
+    assert_equal false, @engine.heap.it.value
+  end
+
+  #
+  # Frontmatter that isn't key: value pairs is reported, not a crash.
+  #
+  def test_read_with_frontmatter_that_is_not_pairs_is_an_error
+    Dir.mktmpdir do |dir|
+      path = File.join( dir, 'list.md' )
+      File.write( path, "---\n- one\n- two\n---\nBody.\n" )
+      d = create_doc
+      d.find_child( 'path' ).set_value( path )
+      d.msg_read
+
+      assert_includes @engine.heap.error.value, 'key: value pairs'
+      assert_equal false, @engine.heap.it.value
+    end
   end
 
   def test_write_then_read_round_trips_frontmatter_and_body
@@ -150,6 +273,66 @@ class MdDocTest < BaseEngineTest
 
       assert File.exist?( path )
       assert_includes File.read( path ), 'New file body.'
+    end
+  end
+
+  #
+  # Writing back unchanged values keeps their YAML types: a date and
+  # a number stay unquoted.
+  #
+  def test_write_keeps_unchanged_dates_and_numbers_as_written
+    Dir.mktmpdir do |dir|
+      path = File.join( dir, 'dated.md' )
+      File.write( path, File.read( fixture( 'dated_doc.md' ) ) )
+      d = create_doc
+      d.find_child( 'path' ).set_value( path )
+      d.msg_read
+      d.find_child( 'frontmatter' ).find_child( 'title' ).set_value( 'Changed' )
+      d.msg_write
+
+      content = File.read( path )
+      assert_includes content, 'date: 2026-10-01'
+      assert_includes content, 'count: 3'
+      assert_includes content, 'title: Changed'
+    end
+  end
+
+  #
+  # A blank path on write is an error, and nothing is written.
+  #
+  def test_write_with_a_blank_path_is_an_error
+    d = create_doc
+    d.msg_write
+    assert_includes @engine.heap.error.value, 'has no path'
+  end
+
+  #
+  # A write that fails (here, a missing folder) is reported, not raised.
+  #
+  def test_write_failure_is_an_error
+    d = create_doc
+    d.find_child( 'path' ).set_value( '/no/such/folder/gloo_md_doc.md' )
+    d.msg_write
+
+    assert @engine.error?
+    assert_includes @engine.heap.error.value, 'Could not write'
+  end
+
+  #
+  # A file with invalid frontmatter isn't overwritten by write.
+  #
+  def test_write_does_not_overwrite_invalid_frontmatter
+    Dir.mktmpdir do |dir|
+      path = File.join( dir, 'bad.md' )
+      original = File.read( fixture( 'bad_frontmatter.md' ) )
+      File.write( path, original )
+      d = create_doc
+      d.find_child( 'path' ).set_value( path )
+      d.find_child( 'body' ).set_value( 'New body.' )
+      d.msg_write
+
+      assert_includes @engine.heap.error.value, "isn't valid YAML"
+      assert_equal original, File.read( path )
     end
   end
 

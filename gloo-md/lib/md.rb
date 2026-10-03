@@ -67,21 +67,26 @@ class Md < Gloo::Core::Obj
 
   #
   # Render the markdown as HTML.
-  # Needs an optional parameter of where to put the rendered html.
-  # The html will be in 'it' as well.
+  # With an optional destination, the HTML goes there and it is true
+  # (false if the destination doesn't exist). With none, the HTML is
+  # put in it.
   #
   def msg_render
-    html = MarkdownExt.render_extensions( value )
+    html = MarkdownExt.render_extensions( value, @engine )
     html = Md.md_2_html( html )
 
-    # Put the HTML in the optional parameter if one is given.
     if @params&.token_count&.positive?
       pn = Gloo::Core::Pn.new( @engine, @params.first )
       o = pn.resolve
+      unless o
+        @engine.err Gloo::Core::NotFound.object( @params.first )
+        return @engine.heap.it.set_to( false )
+      end
+
       o.set_value html
+      return @engine.heap.it.set_to( true )
     end
 
-    # Put the HTML in it, in any case.
     @engine.heap.it.set_to html
   end
 
@@ -140,10 +145,13 @@ class Md < Gloo::Core::Obj
       :shortcut => KEYWORD_SHORT,
       :description => 'Markdown data in a text string. Also supports ' \
         'gloo Markdown extensions (panel, note, quote, idea and check ' \
-        'blocks) rendered via MarkdownExt when the data is rendered.',
+        'blocks) rendered via MarkdownExt when the data is rendered. ' \
+        'A block runs from its [!...] line to the next blank line, the ' \
+        'next block, or the end of the text. An unknown extension is ' \
+        'kept as plain text, with a warning.',
       :messages => [
         'show — Show the markdown data in the terminal.',
-        'render ({dst}) — Convert the markdown to HTML and put it in the {dst} object. The HTML is also put into it either way.',
+        'render ({dst}) — Convert the markdown to HTML. With {dst}, the HTML is put in the {dst} object and it is true (a {dst} that does not exist is an error, and it is false). With no {dst}, the HTML is put in it.',
         'update_asset_path — Update asset paths for all images in the source markdown, so files can refer to images from a path different from the page using them.'
       ],
       :examples => <<~EXAMPLES.strip

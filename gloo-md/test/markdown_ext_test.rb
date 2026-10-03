@@ -64,29 +64,77 @@ class MarkdownExtTest < BaseEngineTest
     assert_includes html, 'Careful'
   end
 
-  def test_unknown_extension_is_dropped_and_reported
+  #
+  # An unknown extension is kept as plain text, with a warning.
+  #
+  def test_unknown_extension_is_kept_as_plain_text_with_a_warning
+    @engine.log.reset_counts
     data = "[!NOPE] Not a real extension\nSome content.\n\nAfter text.\n"
+    html = MarkdownExt.render_extensions( data, @engine )
 
-    out, _err = capture_io { @html = MarkdownExt.render_extensions( data ) }
-
-    assert_includes out, 'ERROR'
-    assert_includes @html, 'After text.'
-    refute_includes @html, 'Not a real extension'
+    assert_includes html, '[!NOPE] Not a real extension'
+    assert_includes html, 'Some content.'
+    assert_includes html, 'After text.'
+    assert_equal 1, @engine.log.warning_count
+    refute @engine.error?
   end
 
   #
-  # Documents current, possibly-surprising behavior rather than
-  # asserting what "should" happen: an extension block with no
-  # trailing blank line (i.e. it's the last thing in the source) is
-  # silently dropped - #render_extensions only flushes a block when
-  # it hits a following blank line, never at end-of-input. Worth a
-  # second look, but not an obvious one-line fix, so left as-is here.
+  # Without an engine, an unknown extension is still kept as plain text.
   #
-  def test_an_extension_block_with_no_trailing_blank_line_is_silently_dropped
+  def test_unknown_extension_without_an_engine_is_kept
+    data = "[!NOPE] Not a real extension\n\n"
+    assert_includes MarkdownExt.render_extensions( data ), 'Not a real extension'
+  end
+
+  #
+  # A block that's the last thing in the data, with no blank line
+  # after it, is still rendered.
+  #
+  def test_an_extension_block_at_the_end_is_rendered
     data = "[!NOTE] Trailing\nThis note has no blank line after it.\n"
     html = MarkdownExt.render_extensions( data )
 
-    assert_equal '', html
+    assert_includes html, 'gloo-panel-secondary'
+    assert_includes html, 'This note has no blank line after it.'
+  end
+
+  #
+  # A block that starts right after another, with no blank line
+  # between, doesn't lose the first block.
+  #
+  def test_back_to_back_blocks_are_both_rendered
+    data = "[!NOTE] First\nFirst body.\n[!INFO] Second\nSecond body.\n\n"
+    html = MarkdownExt.render_extensions( data )
+
+    assert_includes html, 'First body.'
+    assert_includes html, 'Second body.'
+  end
+
+  #
+  # An unknown block followed right away by a known one is kept apart
+  # from it, so the known block's HTML isn't pulled into a paragraph.
+  #
+  def test_unknown_block_then_known_block_are_kept_apart
+    data = "[!NOPE] x\nKept.\n[!NOTE] n\nNote body.\n\n"
+    html = Md.md_2_html( MarkdownExt.render_extensions( data ) )
+
+    refute_match( /<p>[^<]*Kept\.\s*<div/, html )
+    assert_includes html, 'Note body.'
+  end
+
+  #
+  # A badge (an image link, starting [![) is normal Markdown, not an
+  # extension block: it renders with no warning.
+  #
+  def test_a_badge_line_is_not_an_extension
+    @engine.log.reset_counts
+    data = "[![Build](img.svg)](https://example.com)\nAfter the badge.\n"
+    html = Md.md_2_html( MarkdownExt.render_extensions( data, @engine ) )
+
+    assert_includes html, '<img src="img.svg"'
+    assert_includes html, 'After the badge.'
+    assert_equal 0, @engine.log.warning_count
   end
 
 end

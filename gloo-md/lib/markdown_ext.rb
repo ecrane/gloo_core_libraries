@@ -26,20 +26,27 @@ class MarkdownExt
 
   # 
   # Render gloo markdown extensions.
+  # A block runs from its [!...] line to the next blank line, the next
+  # block, or the end of the data. The engine, when given, is used to
+  # warn about an unknown extension.
   # 
-  def self.render_extensions data
+  def self.render_extensions( data, engine = nil )
     return '' if data.nil?
 
     out_data = ""
     one_ext = ""
     in_ext = false
     data.lines.each_with_index do |line, index|
-      if line.start_with?( '[!' )
+      # A line starting [![ is a Markdown image link (eg. a badge), not a block.
+      if line.start_with?( '[!' ) && !line.start_with?( '[![' )
+        # A new block finishes any block still open; a blank line keeps
+        # the two apart for the Markdown renderer.
+        out_data << render_one_ext( one_ext, engine ) << "\n" if in_ext
         in_ext = true
-        one_ext = line
+        one_ext = line.dup
       elsif in_ext && line.strip.blank?
         in_ext = false
-        out_data << render_one_ext( one_ext )
+        out_data << render_one_ext( one_ext, engine )
         out_data << line
       elsif in_ext
         one_ext << line
@@ -47,6 +54,9 @@ class MarkdownExt
         out_data << line
       end
     end
+
+    # A block at the very end has no blank line after it.
+    out_data << render_one_ext( one_ext, engine ) if in_ext
 
     return out_data
   end
@@ -58,7 +68,7 @@ class MarkdownExt
   # 
   # Render one markdown extension.
   # 
-  def self.render_one_ext( data )
+  def self.render_one_ext( data, engine = nil )
     if data.start_with?( PANEL )
       return render_panel( data )
     elsif data.start_with?( QUOTE )
@@ -72,9 +82,10 @@ class MarkdownExt
     elsif data.start_with?( IDEA )
       return render_idea( data )
     else
-      # ERROR
-      puts "ERROR: unknown markdown extension: #{data}"
-      return ""
+      # Keep the block as plain text so its content isn't lost.
+      tag = data.lines.first.to_s[ /\A\[![^\]]*\]?/ ]
+      engine&.warn "Unknown markdown extension '#{tag}'; it was shown as plain text."
+      return data
     end
   end
 
