@@ -136,11 +136,12 @@ class MdDoc < Gloo::Core::Obj
 
     # Overlay changed children; updating an existing key preserves its
     # position, and an unchanged one keeps its YAML type (eg. a date).
+    # A changed one keeps its type too when its new text fits it.
     if fm_can
       fm_can.children.each do |child|
         next if base.key?( child.name ) && scalar_text( base[ child.name ] ) == child.value.to_s
 
-        base[ child.name ] = child.value
+        base[ child.name ] = typed_value( base[ child.name ], child.value )
       end
     end
 
@@ -176,6 +177,47 @@ class MdDoc < Gloo::Core::Obj
     return val.utc.strftime( '%Y-%m-%d %H:%M:%S UTC' ) if val.is_a?( Time )
 
     return val.to_s
+  end
+
+  #
+  # The kind of a frontmatter value whose type write keeps: :boolean,
+  # :number, :date or :time. Nil for text and anything else.
+  #
+  def value_kind( val )
+    case val
+    when TrueClass, FalseClass then :boolean
+    when Integer, Float then :number
+    when Time then :time
+    when Date then :date
+    end
+  end
+
+  #
+  # The value to write for a changed child. If the old value was a
+  # boolean, number, date or time, and the new text reads as the same
+  # kind of value (and back as the same text), write it as that kind;
+  # otherwise write the text as a string.
+  #
+  def typed_value( old, text )
+    kind = value_kind( old )
+    return text unless kind
+
+    # Read shows times with a UTC suffix, which YAML spells Z.
+    parsed = YAML.safe_load( text.to_s.sub( / UTC\z/, ' Z' ), permitted_classes: [ Date, Time ] )
+    return text unless value_kind( parsed ) == kind
+    # Text that YAML would trim or reinterpret (eg. '3 # note') stays text.
+    return text unless without_zone( scalar_text( parsed ) ) == without_zone( text.to_s )
+
+    return parsed
+  rescue Psych::Exception
+    return text
+  end
+
+  #
+  # A time's text without a trailing UTC or Z zone, for comparing.
+  #
+  def without_zone( text )
+    return text.sub( / (UTC|Z)\z/, '' )
   end
 
   #
@@ -292,7 +334,7 @@ class MdDoc < Gloo::Core::Obj
       ],
       :messages => [
         'read — Read the file at path, parse the YAML frontmatter and Markdown body. The frontmatter children are replaced with exactly the keys in the file (keys from an earlier read are removed); dates and times become text (times in UTC). Populates frontmatter.* children and body. It is true when the file was read, false if it could not be.',
-        'write — Serialize frontmatter children back to YAML and combine with body. Writes the result to the file at path, creating it if it does not exist. Key order is preserved, and values that were not changed keep their YAML type (eg. a date or a number).'
+        'write — Serialize frontmatter children back to YAML and combine with body. Writes the result to the file at path, creating it if it does not exist. Key order is preserved. A value keeps its YAML type (a date, time, number or true/false): unchanged values always, and changed values when the new text is that type too (eg. 2026-10-05 for a date); otherwise the new text is written as text.'
       ],
       :notes => 'If the file has no frontmatter block, frontmatter ' \
         'will have no children and body will contain the full file ' \

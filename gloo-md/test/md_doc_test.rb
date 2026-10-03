@@ -336,4 +336,65 @@ class MdDocTest < BaseEngineTest
     end
   end
 
+  #
+  # Read a file with one value of each kind, change the given children,
+  # write, and return the written file.
+  #
+  def write_changed( changes )
+    Dir.mktmpdir do |dir|
+      path = File.join( dir, 'typed.md' )
+      File.write( path, "---\ncount: 3\nratio: 0.5\ndone: false\n" \
+        "date: 2026-10-01\nat: 2026-10-01 09:30:00\n---\nBody.\n" )
+      d = create_doc
+      d.find_child( 'path' ).set_value( path )
+      d.msg_read
+      fm = d.find_child( 'frontmatter' )
+      changes.each { |key, val| fm.find_child( key ).set_value( val ) }
+      d.msg_write
+      return File.read( path )
+    end
+  end
+
+  #
+  # A changed number is written as a number.
+  #
+  def test_write_keeps_the_type_of_a_changed_number
+    content = write_changed( 'count' => '4', 'ratio' => '0.75' )
+    assert_includes content, "count: 4\n"
+    assert_includes content, "ratio: 0.75\n"
+  end
+
+  #
+  # A changed boolean is written as a boolean, though true and false
+  # are different Ruby classes.
+  #
+  def test_write_keeps_the_type_of_a_changed_boolean
+    assert_includes write_changed( 'done' => 'true' ), "done: true\n"
+  end
+
+  #
+  # A changed date is written as a date.
+  #
+  def test_write_keeps_the_type_of_a_changed_date
+    assert_includes write_changed( 'date' => '2026-10-05' ), "date: 2026-10-05\n"
+  end
+
+  #
+  # A changed time is written as a time, in the UTC form read shows it
+  # in or with no zone.
+  #
+  def test_write_keeps_the_type_of_a_changed_time
+    assert_includes write_changed( 'at' => '2026-10-05 10:00:00 UTC' ), "at: 2026-10-05 10:00:00\n"
+    assert_includes write_changed( 'at' => '2026-10-05 10:00:00' ), "at: 2026-10-05 10:00:00\n"
+  end
+
+  #
+  # Text that doesn't fit the old type is written as a string.
+  #
+  def test_write_changed_text_that_does_not_fit_stays_a_string
+    content = write_changed( 'date' => 'soon', 'count' => '3 # note' )
+    assert_includes content, "date: soon\n"
+    assert_includes content, "count: '3 # note'"
+  end
+
 end

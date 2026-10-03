@@ -9,6 +9,16 @@ tests [can] :
 
     # Set by on_error, for errors from messages that don't set it.
     err_fired [bool] : false
+
+    # A note with a real date, written to /tmp by write_keeps_a_changed_date.
+    dated_file [file] : /tmp/gloo_md_doc_dated.md
+    dated_src [text] : BEGIN
+---
+date: 2026-10-01
+---
+Body.
+END
+    file_text [text] :
     on_error [script] :
       put true into ^.err_fired
 
@@ -177,4 +187,20 @@ tests [can] :
         tell ^^.doc12 to write
         eval ^^.err_fired = true
         assert "expected a failed write to fire on_error"
+
+    write_keeps_a_changed_date [test] :
+      description [string] : a changed date is written as a date, not quoted text
+      on_test [script] :
+        tell tests.md_doc.dated_file to write ( tests.md_doc.dated_src )
+        create tests.md_doc.doc13 as md_doc
+        put '/tmp/gloo_md_doc_dated.md' into tests.md_doc.doc13.path
+        tell tests.md_doc.doc13 to read
+        put '2026-10-05' into tests.md_doc.doc13.frontmatter.date
+        tell tests.md_doc.doc13 to write
+
+        tell tests.md_doc.dated_file to read ( tests.md_doc.file_text )
+        check tests.md_doc.file_text for substring? ( "date: 2026-10-05" )
+        assert "expected the changed date to be written as a date"
+
+        tell tests.md_doc.dated_file to delete
 
