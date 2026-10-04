@@ -52,12 +52,190 @@ class YamlObjTest < BaseEngineTest
     refute o.add_children_on_create?
   end
 
-  def test_load_with_no_params_does_nothing
+  #
+  # Run a gloo command.
+  #
+  def run_cmd( cmd )
+    @engine.parser.parse_immediate( cmd ).run
+  end
+
+  #
+  # A yaml object pointing at a file with the given content, in a
+  # temp folder; yields the object and the file's path.
+  #
+  def with_yaml_file( content )
+    Dir.mktmpdir do |dir|
+      path = File.join( dir, 'data.yaml' )
+      File.write( path, content ) if content
+      y = create_yaml_obj
+      y.set_value( path )
+      yield y, path
+    end
+  end
+
+  #
+  # load with no container is a syntax error; it is false.
+  #
+  def test_load_with_no_param_is_a_syntax_error
     y = create_yaml_obj
     y.set_value( '/does/not/matter.yaml' )
-    y.instance_variable_set( :@params, nil )
+    run_cmd 'tell y to load'
 
-    y.msg_load # should not raise
+    assert_equal Gloo::Core::Error::SYNTAX, @engine.heap.error.kind
+    assert_equal false, @engine.heap.it.value
+  end
+
+  #
+  # save with no container is a syntax error.
+  #
+  def test_save_with_no_param_is_a_syntax_error
+    y = create_yaml_obj
+    y.set_value( '/does/not/matter.yaml' )
+    run_cmd 'tell y to save'
+
+    assert_equal Gloo::Core::Error::SYNTAX, @engine.heap.error.kind
+  end
+
+  #
+  # A container that doesn't exist is reported as not found.
+  #
+  def test_load_into_a_missing_container_is_an_error
+    with_yaml_file( "title: T\n" ) do |y, _|
+      run_cmd 'tell y to load (no_such_obj)'
+      assert_equal Gloo::Core::NotFound.object( 'no_such_obj' ), @engine.heap.error.value
+      assert_equal false, @engine.heap.it.value
+    end
+  end
+
+  #
+  # An empty path is an error, not an exception.
+  #
+  def test_load_with_an_empty_path_is_an_error
+    create_yaml_obj
+    create_container( 'data7', 'title' )
+    run_cmd 'tell y to load (data7)'
+
+    assert_includes @engine.heap.error.value, 'has no path'
+    assert_equal false, @engine.heap.it.value
+  end
+
+  #
+  # A successful load puts true in it.
+  #
+  def test_load_puts_true_in_it
+    with_yaml_file( "title: T\n" ) do |y, _|
+      create_container( 'data8', 'title' )
+      run_cmd 'tell y to load (data8)'
+      assert_equal true, @engine.heap.it.value
+      refute @engine.error?
+    end
+  end
+
+  #
+  # A date loads as text instead of raising.
+  #
+  def test_load_a_date_as_text
+    with_yaml_file( "date: 2026-10-01\n" ) do |y, _|
+      data = create_container( 'data9', 'date' )
+      run_cmd 'tell y to load (data9)'
+      refute @engine.error?
+      assert_equal '2026-10-01', data.find_child( 'date' ).value
+    end
+  end
+
+  #
+  # Invalid YAML is an error; it is false.
+  #
+  def test_load_invalid_yaml_is_an_error
+    with_yaml_file( "title: [unclosed\n" ) do |y, _|
+      create_container( 'data10', 'title' )
+      run_cmd 'tell y to load (data10)'
+      assert_includes @engine.heap.error.value, "Couldn't read the YAML"
+      assert_equal false, @engine.heap.it.value
+    end
+  end
+
+  #
+  # A file that's a list, not key: value pairs, is an error.
+  #
+  def test_load_a_top_level_list_is_an_error
+    with_yaml_file( "- a\n- b\n" ) do |y, _|
+      create_container( 'data11', 'title' )
+      run_cmd 'tell y to load (data11)'
+      assert_includes @engine.heap.error.value, 'key: value pairs'
+    end
+  end
+
+  #
+  # A nested block is skipped with a warning; the child is unchanged.
+  #
+  def test_load_skips_a_nested_block_with_a_warning
+    with_yaml_file( "server:\n  host: x\ntitle: T\n" ) do |y, _|
+      data = create_container( 'data12', 'server', 'title' )
+      data.find_child( 'server' ).set_value( 'unchanged' )
+      @engine.log.reset_counts
+      capture_io { run_cmd 'tell y to load (data12)' }
+
+      assert_equal 'unchanged', data.find_child( 'server' ).value
+      assert_equal 'T', data.find_child( 'title' ).value
+      assert_equal 1, @engine.log.warning_count
+      assert_equal true, @engine.heap.it.value
+    end
+  end
+
+  #
+  # save leaves a nested block or list in the file as it is.
+  #
+  def test_save_leaves_a_nested_block_and_a_list_untouched
+    with_yaml_file( "server:\n  host: x\ntags:\n- a\n- b\ntitle: T\n" ) do |y, path|
+      data = create_container( 'data13', 'server', 'tags', 'title' )
+      data.find_child( 'title' ).set_value( 'Changed' )
+      @engine.log.reset_counts
+      capture_io { run_cmd 'tell y to save (data13)' }
+
+      saved = YAML.load_file( path )
+      assert_equal( { 'host' => 'x' }, saved[ 'server' ] )
+      assert_equal %w[a b], saved[ 'tags' ]
+      assert_equal 'Changed', saved[ 'title' ]
+      assert_equal 2, @engine.log.warning_count
+    end
+  end
+
+  #
+  # save to a new file reports nothing.
+  #
+  def test_save_to_a_new_file_reports_no_error
+    with_yaml_file( nil ) do |y, path|
+      create_container( 'data14', 'title' )
+      @engine.log.reset_counts
+      capture_io { run_cmd 'tell y to save (data14)' }
+      refute @engine.error?
+      assert_equal 0, @engine.log.error_count
+      assert File.exist?( path )
+    end
+  end
+
+  #
+  # save doesn't overwrite a file it couldn't read.
+  #
+  def test_save_does_not_overwrite_invalid_yaml
+    with_yaml_file( "title: [unclosed\n" ) do |y, path|
+      create_container( 'data15', 'title' )
+      run_cmd 'tell y to save (data15)'
+      assert_includes @engine.heap.error.value, "Couldn't read the YAML"
+      assert_equal "title: [unclosed\n", File.read( path )
+    end
+  end
+
+  #
+  # A failed write is an error, not an exception.
+  #
+  def test_save_failure_is_an_error
+    y = create_yaml_obj
+    y.set_value( '/no/such/folder/data.yaml' )
+    create_container( 'data16', 'title' )
+    run_cmd 'tell y to save (data16)'
+    assert_includes @engine.heap.error.value, 'Could not write'
   end
 
   def test_load_populates_container_children_from_the_file
@@ -94,9 +272,13 @@ class YamlObjTest < BaseEngineTest
     end
   end
 
-  def test_load_from_a_missing_file_logs_and_leaves_children_untouched
+  #
+  # A missing file is reported as not found; children are unchanged.
+  #
+  def test_load_from_a_missing_file_is_an_error
+    path = '/tmp/does_not_exist_gloo_yaml_test.yaml'
     y = create_yaml_obj
-    y.set_value( '/tmp/does_not_exist_gloo_yaml_test.yaml' )
+    y.set_value( path )
     data = create_container( 'data3', 'title' )
     data.find_child( 'title' ).set_value( 'unchanged' )
 
@@ -104,6 +286,8 @@ class YamlObjTest < BaseEngineTest
     i.run
 
     assert_equal 'unchanged', data.find_child( 'title' ).value
+    assert_equal Gloo::Core::NotFound.file( path ), @engine.heap.error.value
+    assert_equal false, @engine.heap.it.value
   end
 
   def test_save_writes_container_children_to_a_new_file

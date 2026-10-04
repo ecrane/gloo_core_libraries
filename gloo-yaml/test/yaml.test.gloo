@@ -7,6 +7,14 @@ test [can] :
     on_load [script] :
       load lib yaml
 
+    # Set by on_error, for errors from messages that don't set it.
+    err_fired [bool] : false
+    on_error [script] :
+      put true into ^.err_fired
+
+    # A file save creates in /tmp, and removes after.
+    new_file [file] : /tmp/gloo_yaml_new_file.yaml
+
     typename [test] :
       description [string] : yaml typename is registered
       on_test [script] :
@@ -85,3 +93,95 @@ test [can] :
         # Restore original value
         put 'active' into test.yaml.data2.state
         tell test.yaml.cfg2 to save (test.yaml.data2)
+
+    load_puts_true_in_it [test] :
+      description [string] : a successful load puts true in it
+      on_test [script] :
+        create test.yaml.cfg3 as yaml
+        put '~/dev/gloo_core_libraries/gloo-yaml/test/fixtures/test_data.yaml' into ^^.cfg3
+        create test.yaml.data3 as can
+        create test.yaml.data3.title as string
+        tell test.yaml.cfg3 to load (test.yaml.data3)
+        assert "expected load to put true in it"
+
+    load_with_no_container_is_an_error [test] :
+      description [string] : load with no container is an error and puts false in it
+      expect_errors [bool] : true
+      on_test [script] :
+        create test.yaml.cfg4 as yaml
+        put '~/dev/gloo_core_libraries/gloo-yaml/test/fixtures/test_data.yaml' into ^^.cfg4
+        tell test.yaml.cfg4 to load
+        refute "expected load with no container to put false in it"
+
+    load_into_a_missing_container_is_an_error [test] :
+      description [string] : load into a container that doesn't exist is an error and puts false in it
+      expect_errors [bool] : true
+      on_test [script] :
+        create test.yaml.cfg5 as yaml
+        put '~/dev/gloo_core_libraries/gloo-yaml/test/fixtures/test_data.yaml' into ^^.cfg5
+        tell test.yaml.cfg5 to load (test.yaml.no_such_container)
+        refute "expected load into a missing container to put false in it"
+
+    load_a_missing_file_is_an_error [test] :
+      description [string] : load of a missing file is an error and puts false in it
+      expect_errors [bool] : true
+      on_test [script] :
+        create test.yaml.cfg6 as yaml
+        put '/tmp/no_such_gloo_yaml_file.yaml' into ^^.cfg6
+        create test.yaml.data6 as can
+        tell test.yaml.cfg6 to load (test.yaml.data6)
+        refute "expected load of a missing file to put false in it"
+
+    load_a_date [test] :
+      description [string] : a date in the file loads as text
+      on_test [script] :
+        create test.yaml.cfg7 as yaml
+        put '~/dev/gloo_core_libraries/gloo-yaml/test/fixtures/dated.yaml' into ^^.cfg7
+        create test.yaml.data7 as can
+        create test.yaml.data7.date as string
+        tell test.yaml.cfg7 to load (test.yaml.data7)
+        eval test.yaml.data7.date = '2026-10-01'
+        assert "expected the date to load as 2026-10-01"
+
+    load_skips_a_nested_block [test] :
+      description [string] : a nested block is skipped with a warning, leaving the child unchanged
+      expect_errors [bool] : true
+      on_test [script] :
+        create test.yaml.cfg8 as yaml
+        put '~/dev/gloo_core_libraries/gloo-yaml/test/fixtures/nested.yaml' into ^^.cfg8
+        create test.yaml.data8 as can
+        create test.yaml.data8.server as string
+        put 'unchanged' into test.yaml.data8.server
+        create test.yaml.data8.title as string
+        tell test.yaml.cfg8 to load (test.yaml.data8)
+
+        eval test.yaml.data8.server = 'unchanged'
+        assert "expected the nested block to leave its child unchanged"
+
+    save_to_a_new_file [test] :
+      description [string] : save creates a new file without reporting an error
+      on_test [script] :
+        create test.yaml.cfg9 as yaml
+        put '/tmp/gloo_yaml_new_file.yaml' into ^^.cfg9
+        create test.yaml.data9 as can
+        create test.yaml.data9.title as string
+        put 'New' into test.yaml.data9.title
+        tell test.yaml.cfg9 to save (test.yaml.data9)
+
+        check test.yaml.new_file for exists?
+        assert "expected save to create the file"
+        tell test.yaml.new_file to delete
+
+    save_failure_is_an_error [test] :
+      description [string] : a save that fails (a missing folder) is an error
+      expect_errors [bool] : true
+      on_test [script] :
+        put false into ^^.err_fired
+        create test.yaml.cfg10 as yaml
+        put '/no/such/folder/gloo_yaml.yaml' into ^^.cfg10
+        create test.yaml.data10 as can
+        create test.yaml.data10.title as string
+        tell test.yaml.cfg10 to save (test.yaml.data10)
+        eval ^^.err_fired = true
+        assert "expected a failed save to fire on_error"
+
