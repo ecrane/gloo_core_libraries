@@ -135,9 +135,82 @@ class TableTest < BaseEngineTest
   # never actually passed (a real bug, fixed alongside this test; see
   # the story notes).
   #
-  def test_render_returns_nil_without_a_running_app
+  #
+  # Outside a web app, render is an error and returns nil.
+  #
+  def test_render_outside_a_web_app_is_an_error
     t = create_table
     refute @engine.app_running?
+    assert_nil t.render
+    assert_includes @engine.heap.error.value, 'can only render inside a web app'
+  end
+
+  #
+  # tell t to render outside a web app puts false in it.
+  #
+  def test_msg_render_outside_a_web_app_puts_false_in_it
+    t = create_table
+    t.msg_render
+    assert_equal false, @engine.heap.it.value
+  end
+
+  #
+  # A stand-in for gloo-web's table renderer.
+  #
+  class FakeRenderer
+    #
+    # Return a marker instead of real HTML.
+    #
+    def data_to_table( params )
+      return "<table>#{params[ :rows ].size} rows</table>"
+    end
+  end
+
+  #
+  # When it can render, the HTML goes in it.
+  #
+  def test_msg_render_puts_the_html_in_it
+    t = create_table
+    t.define_singleton_method( :table_renderer ) { FakeRenderer.new }
+    t.msg_render
+    assert_equal '<table>0 rows</table>', @engine.heap.it.value
+  end
+
+  #
+  # An empty data container has no rows, rather than crashing.
+  #
+  def test_data_with_an_empty_data_container_has_no_rows
+    t = create_table
+    assert_equal [], t.data[ 1 ]
+  end
+
+  #
+  # A table whose data is a query that fails (run_query returns nil,
+  # as it does after reporting the failure).
+  #
+  def create_table_with_a_failed_query
+    t = create_table
+    q = Query.new( @engine )
+    q.define_singleton_method( :run_query ) { nil }
+    t.define_singleton_method( :find_child ) { |n| n == 'data' ? q : super( n ) }
+    return t
+  end
+
+  #
+  # show stops cleanly after a failed query.
+  #
+  def test_show_after_a_failed_query_does_not_crash
+    t = create_table_with_a_failed_query
+    out, _ = capture_io { t.msg_show }
+    assert_equal '', out
+  end
+
+  #
+  # render returns nil after a failed query.
+  #
+  def test_render_after_a_failed_query_returns_nil
+    t = create_table_with_a_failed_query
+    t.define_singleton_method( :table_renderer ) { FakeRenderer.new }
     assert_nil t.render
   end
 

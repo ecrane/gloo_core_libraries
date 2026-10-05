@@ -3,6 +3,7 @@
 #
 # This file is loaded when someone does `require 'gloo-mysql'`
 # 
+require 'db_connection'
 require 'query'
 require 'query_result'
 require 'table'

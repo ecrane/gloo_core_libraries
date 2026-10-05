@@ -73,17 +73,15 @@ class Table < Gloo::Core::Obj
     
     if o.is_a? Query
       @engine.log.debug "Table getting data from query."
-      begin
-        result = o.run_query
-        return result
-      rescue => e
-        @engine.log_exception e
-        return nil
-      end
+      # Nil if the query failed (Query has reported it).
+      return o.run_query
     else
       cols = self.columns
 
-      if o.children&.first.children.empty?
+      # No rows yet.
+      return [ cols, [] ] if o.children.empty?
+
+      if o.children.first.children.empty?
         # It is a simgle row table.
         rows = [ cols.map { |h| o.find_child( h )&.value } ]
       else
@@ -166,14 +164,24 @@ class Table < Gloo::Core::Obj
 
   #
   # Show the table in the CLI.
+  # Shows nothing if its query failed (the query reports the error).
   #
   def msg_show
+    result = data
+    return unless result
+
     title = self.value
-    @engine.platform.table.show headers, data[1], title
+    @engine.platform.table.show headers, result[1], title
   end
 
+  #
+  # Render the table as HTML, inside a web app.
+  # It has the HTML, or false if the table couldn't be rendered.
+  #
   def msg_render
-    return render
+    html = render
+    @engine.heap.it.set_to( html.nil? ? false : html )
+    return html
   end
 
 
@@ -186,8 +194,18 @@ class Table < Gloo::Core::Obj
   # The render_ƒ is 'render_html', 'render_text', 'render_json', etc.
   # 
   def render render_ƒ = :render_html
+    # Outside a web app (or without gloo-web) there's no renderer.
+    helper = table_renderer
+    unless helper
+      @engine.err "table '#{name}' can only render inside a web app (gloo-web); use show to see it in the console."
+      return nil
+    end
+
     begin
       result = self.data
+      # The query failed and has reported it.
+      return nil unless result
+
       head = self.headers 
       head = result[0] if head.empty?
       rows = result[1]
@@ -207,18 +225,22 @@ class Table < Gloo::Core::Obj
         params[ :always_rows ] = true
       end
 
-      # helper = Gloo::WebSvr::TableRenderer.new( @engine )
-      helper = @engine.running_app&.create_table_renderer
-      if helper
-        return helper.data_to_table params
-      else
-        @engine.log.error "Table renderer not found."
-        return nil
-      end
+      return helper.data_to_table params
     rescue => e
       @engine.log_exception e
       return nil
     end
+  end
+
+  #
+  # The web app's table renderer, or nil outside a web app or when
+  # gloo-web isn't loaded.
+  #
+  def table_renderer
+    return nil unless @engine.running_app
+    return nil unless defined?( WebSvr::TableRenderer )
+
+    return @engine.running_app.create_table_renderer
   end
 
   # 
@@ -285,8 +307,12 @@ class Table < Gloo::Core::Obj
         'always_rows (boolean) — Optional. By default, if a table\'s data is only 1 row, it shows that row in a vertical table. Marking this true means a horizontal table is shown even if only one row is returned.'
       ],
       :messages => [
-        'show — Show the contents of the table in the CLI.'
+        'show — Show the contents of the table in the CLI.',
+        'render — Render the table as HTML, inside a web app (gloo-web). It has the HTML. Outside a web app this is an error, and it is false; use show instead.'
       ],
+      :notes => 'If data is a query and the query fails, the query ' \
+        'reports the error and show and render stop without showing ' \
+        'anything.',
       :examples => <<~EXAMPLES.strip
         t [tbl] :
           on_load [script] :

@@ -22,12 +22,18 @@ Gem::Specification.new do |spec|
   spec.files = [
     "README.md",
     "lib/gloo-db.rb",
+    "lib/db_connection.rb",
     "lib/query.rb",
     "lib/query_result.rb",
     "lib/table.rb"
   ]
 
   spec.require_paths = ['lib']
+
+  #
+  # Uses gloo 7.0's NotFound wording
+  #
+  spec.add_dependency 'gloo', '>= 7.0'
 
   #
   # Development Dependencies

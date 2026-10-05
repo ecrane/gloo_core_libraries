@@ -30,6 +30,40 @@ class FakeDb
 
 end
 
+#
+# A stand-in database error, as a driver's library would raise.
+#
+class FakeDbError < StandardError; end
+
+#
+# A stand-in database connection whose query raises the given error,
+# as a driver does for bad SQL or a lost connection.
+#
+class RaisingDb
+
+  #
+  # Set up with the error to raise.
+  #
+  def initialize( error )
+    @error = error
+  end
+
+  #
+  # Raise the error.
+  #
+  def query( sql, params )
+    raise @error
+  end
+
+  #
+  # Only FakeDbError counts as a database error.
+  #
+  def database_errors
+    return [ FakeDbError ]
+  end
+
+end
+
 class QueryTest < BaseEngineTest
 
   def test_the_typename
@@ -87,9 +121,128 @@ class QueryTest < BaseEngineTest
     o.define_singleton_method( :db_obj ) { fake_db }
   end
 
-  def test_msg_run_with_no_database_child_reports_an_error_and_does_not_raise
+  #
+  # A database alias that doesn't point anywhere yet is reported as a
+  # missing connection; it is false.
+  #
+  def test_msg_run_with_no_database_reports_an_error
     o = create_query
-    o.msg_run # should not raise
+    o.msg_run
+
+    assert_equal Query::DB_MISSING_ERR, @engine.heap.error.value
+    assert_equal false, @engine.heap.it.value
+  end
+
+  #
+  # Set the query's SQL.
+  #
+  def put_sql( sql )
+    @engine.parser.parse_immediate( "put '#{sql}' into o.sql" ).run
+  end
+
+  #
+  # A database alias that points at nothing is reported as not found.
+  #
+  def test_msg_run_with_a_database_alias_to_nothing_is_an_error
+    o = create_query
+    @engine.parser.parse_immediate( "put 'no_such_db' into o.database*" ).run
+    put_sql 'SELECT 1'
+    o.msg_run
+
+    assert_equal Gloo::Core::NotFound.object( 'no_such_db' ), @engine.heap.error.value
+    assert_equal false, @engine.heap.it.value
+  end
+
+  #
+  # A database alias that points at something that isn't a database
+  # connection is an error.
+  #
+  def test_msg_run_with_a_database_that_is_not_a_connection_is_an_error
+    o = create_query
+    @engine.parser.parse_immediate( 'create s as string' ).run
+    @engine.parser.parse_immediate( "put 's' into o.database*" ).run
+    put_sql 'SELECT 1'
+    o.msg_run
+
+    assert_equal "'s' is not a database connection.", @engine.heap.error.value
+    assert_equal false, @engine.heap.it.value
+  end
+
+  #
+  # Blank SQL is an error, and the driver isn't called.
+  #
+  def test_msg_run_with_no_sql_is_an_error
+    o = create_query
+    fake_db = FakeDb.new( [], [] )
+    stub_db( o, fake_db )
+    o.msg_run
+
+    assert_includes @engine.heap.error.value, 'has no SQL'
+    assert_equal false, @engine.heap.it.value
+    assert_nil fake_db.last_sql
+  end
+
+  #
+  # A query that runs puts true in it.
+  #
+  def test_msg_run_puts_true_in_it
+    o = create_query
+    stub_db( o, FakeDb.new( [ 'id' ], [ [ 1 ] ] ) )
+    put_sql 'SELECT * FROM x'
+    o.msg_run
+    assert_equal true, @engine.heap.it.value
+  end
+
+  #
+  # A database error is one readable error; it is false, and stale
+  # results are cleared.
+  #
+  def test_msg_run_reports_a_database_error
+    o = create_query
+    stub_db( o, FakeDb.new( [ 'id' ], [ [ 1 ], [ 2 ] ] ) )
+    put_sql 'SELECT * FROM x'
+    o.msg_run
+
+    stub_db( o, RaisingDb.new( FakeDbError.new( 'no such table: x' ) ) )
+    o.msg_run
+
+    assert_equal 'Query failed: no such table: x', @engine.heap.error.value
+    assert_equal false, @engine.heap.it.value
+    assert_equal 0, o.find_child( 'result' ).child_count
+  end
+
+  #
+  # An error that isn't one of the driver's database errors is a real
+  # bug, and isn't reported as a failed query.
+  #
+  def test_msg_run_lets_other_errors_out
+    o = create_query
+    stub_db( o, RaisingDb.new( NoMethodError.new( 'bug' ) ) )
+    put_sql 'SELECT * FROM x'
+    assert_raises( NoMethodError ) { o.msg_run }
+  end
+
+  #
+  # A driver that reports a setup problem and returns no result makes
+  # the query fail.
+  #
+  def test_msg_run_with_no_result_from_the_driver_puts_false_in_it
+    o = create_query
+    stub_db( o, FakeDb.new( [], nil ) )
+    put_sql 'SELECT * FROM x'
+    o.msg_run
+    assert_equal false, @engine.heap.it.value
+  end
+
+  #
+  # run_query (used by table) returns nil when the query fails.
+  #
+  def test_run_query_returns_nil_on_a_database_error
+    o = create_query
+    stub_db( o, RaisingDb.new( FakeDbError.new( 'bad' ) ) )
+    put_sql 'SELECT * FROM x'
+    assert_nil o.run_query
+    assert_equal 'Query failed: bad', @engine.heap.error.value
   end
 
   def test_run_query_returns_the_raw_result_from_the_db

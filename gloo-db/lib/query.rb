@@ -17,6 +17,7 @@ class Query < Gloo::Core::Obj
   SIMPLE_LIST = 'simple_list'.freeze
 
   DB_MISSING_ERR = 'The database connection is missing!'.freeze
+  QUERY_FAILED = 'Query failed: '.freeze
 
   #
   # The name of the object type.
@@ -79,45 +80,43 @@ class Query < Gloo::Core::Obj
 
   #
   # Run the query and process the results.
+  # It is true when the query ran, false if it failed.
   #
   def msg_run
     db = db_obj
-    return unless db
+    return @engine.heap.it.set_to( false ) unless db
 
-    begin
-      clear_results
+    sql = sql_value
+    return @engine.heap.it.set_to( false ) unless sql
 
-      log_query sql_value, param_array
-      result = db.query( sql_value, param_array )
-      process_result( result, db )
-    rescue => e
-      @engine.log_exception e
-      return
-    end
+    # Clear first, so a failed query doesn't leave the last results.
+    clear_results
+    result = execute( db, sql )
+    return @engine.heap.it.set_to( false ) unless result
+
+    process_result( result, db )
+    @engine.heap.it.set_to true
   end
 
   #
-  # Run the query and return the results.
+  # Run the query and return the results (used by table).
+  # Returns nil if the query failed; the failure is reported.
   #
   def run_query
     db = db_obj
-    return unless db
+    return nil unless db
 
-    begin
-      log_query sql_value, param_array
+    sql = sql_value
+    return nil unless sql
 
-      db_start = ::Time.now
-      result = db.query( sql_value, param_array )
-      db_done = ::Time.now
-      elapsed = ( ( db_done - db_start ) * 1000.0 ).round(2)
+    db_start = ::Time.now
+    result = execute( db, sql )
+    db_done = ::Time.now
+    elapsed = ( ( db_done - db_start ) * 1000.0 ).round(2)
 
-      app = @engine.running_app
-      app.add_db_time elapsed if app
-      return result
-    rescue => e
-      @engine.log_exception e
-      return
-    end
+    app = @engine.running_app
+    app.add_db_time elapsed if app
+    return result
   end
 
   # 
@@ -151,29 +150,71 @@ class Query < Gloo::Core::Obj
   private
 
   #
-  # Get the database connection.
+  # Run the SQL on the database connection. A database error (one of
+  # the driver's database_errors) is reported as one readable error,
+  # with no backtrace. Returns the result, or nil if the query failed
+  # or the driver reported a setup problem.
+  #
+  def execute( db, sql )
+    params = param_array
+    log_query sql, params
+    return db.query( sql, params )
+  rescue *database_errors_for( db ) => e
+    @engine.err "#{QUERY_FAILED}#{e.message}"
+    return nil
+  end
+
+  #
+  # The exception classes that are database errors for the driver.
+  # A driver that doesn't say (an older one) counts every
+  # StandardError.
+  #
+  def database_errors_for( db )
+    return db.database_errors if db.respond_to?( :database_errors )
+
+    return [ StandardError ]
+  end
+
+  #
+  # Get the database connection. Reports an error and returns nil if
+  # there's no database child, its alias points at nothing, or it
+  # isn't a database connection.
   #
   def db_obj
     o = find_child DB
 
-    unless o
+    # No database child, or an alias that doesn't point anywhere yet.
+    if o.nil? || o.value.to_s.strip.empty?
       @engine.err DB_MISSING_ERR
       return nil
     end
 
-    return Gloo::Objs::Alias.resolve_alias( @engine, o )
+    db = Gloo::Objs::Alias.resolve_alias( @engine, o )
+    unless db
+      @engine.err Gloo::Core::NotFound.object( o.value )
+      return nil
+    end
+
+    unless db.respond_to?( :query )
+      @engine.err "'#{o.value}' is not a database connection."
+      return nil
+    end
+
+    return db
   end
 
   #
   # Get the SQL from the child object.
-  # Returns nil if there is none.
+  # Reports an error and returns nil if there is none.
   #
   def sql_value
     o = find_child SQL
-    return nil unless o
-
     o = Gloo::Objs::Alias.resolve_alias( @engine, o )
-    return o.value
+    sql = o&.value.to_s
+    return sql unless sql.strip.empty?
+
+    @engine.err "query '#{name}' has no SQL; put a SQL statement into #{name}.sql first."
+    return nil
   end
 
   #
@@ -282,8 +323,13 @@ class Query < Gloo::Core::Obj
         'params (container) — Optional list of parameters for the query.'
       ],
       :messages => [
-        'run — Run the query and get back the data.'
+        'run — Run the query and get back the data. It is true when the query ran, false if it failed (with or without a result container).'
       ],
+      :notes => 'Errors (and it is false): no database, a database ' \
+        'alias that points at nothing or at something that is not a ' \
+        'database connection, no SQL, and a database error such as bad ' \
+        "SQL or a missing table, reported as 'Query failed: ' and the " \
+        "database's message. A failed query clears the result container.",
       :examples => <<~EXAMPLES.strip
         sqlite [can] :
           on_load [script] : run sqlite.sql

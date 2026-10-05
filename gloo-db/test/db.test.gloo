@@ -84,3 +84,45 @@ tests [can] :
 
         exists? instance tests.db.t2.data
         assert "expected table to have a data child"
+
+    # Errors gloo-db reports itself, before any driver is involved.
+    # Queries that need a real connection (no SQL, it true, 'Query
+    # failed: …') are tested in gloo-sqlite's suite.
+
+    query_with_no_database [test] :
+      description [string] : running a query with no database is an error and puts false in it
+      expect_errors [bool] : true
+      on_test [script] :
+        create tests.db.q3 as query
+        put 'SELECT 1' into tests.db.q3.sql
+        tell tests.db.q3 to run
+        refute "expected a query with no database to put false in it"
+
+    query_with_a_database_alias_to_nothing [test] :
+      description [string] : a database alias that points at nothing is an error and puts false in it
+      expect_errors [bool] : true
+      on_test [script] :
+        create tests.db.q4 as query
+        put 'tests.db.no_such_db' into tests.db.q4.database*
+        put 'SELECT 1' into tests.db.q4.sql
+        tell tests.db.q4 to run
+        refute "expected a database alias to nothing to put false in it"
+
+    query_with_a_database_that_is_not_a_connection [test] :
+      description [string] : a database alias to something that isn't a connection is an error and puts false in it
+      expect_errors [bool] : true
+      on_test [script] :
+        create tests.db.not_a_db as string
+        create tests.db.q5 as query
+        put 'tests.db.not_a_db' into tests.db.q5.database*
+        put 'SELECT 1' into tests.db.q5.sql
+        tell tests.db.q5 to run
+        refute "expected a database that isn't a connection to put false in it"
+
+    table_render_outside_a_web_app [test] :
+      description [string] : rendering a table outside a web app is an error and puts false in it
+      expect_errors [bool] : true
+      on_test [script] :
+        create tests.db.t3 as table
+        tell tests.db.t3 to render
+        refute "expected render outside a web app to put false in it"
