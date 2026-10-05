@@ -1,4 +1,5 @@
 require 'test_helper'
+require 'minitest/mock'
 require 'tmpdir'
 
 class SqliteTest < BaseEngineTest
@@ -78,7 +79,7 @@ class SqliteTest < BaseEngineTest
     @engine.parser.run "put 'test/test_helper.rb' into o.database"
     @engine.parser.run "tell o to verify"
     assert @engine.error?
-    assert_equal 'file is not a database', @engine.heap.error.value
+    assert_equal "Could not connect to sqlite 'o': file is not a database", @engine.heap.error.value
     assert_equal false, @engine.heap.it.value
   end
 
@@ -154,6 +155,95 @@ class SqliteTest < BaseEngineTest
 
     assert_kind_of QueryResult, result
     assert result.has_data_to_show?
+  end
+
+  #
+  # verify with no database child is a setup error, not a crash.
+  #
+  def test_verify_with_no_database_child_is_an_error
+    obj = Sqlite.new( @engine )
+    obj.name = 'o'
+    obj.msg_verify
+    assert_equal Sqlite::DB_REQUIRED_ERR, @engine.heap.error.value
+    assert_equal false, @engine.heap.it.value
+  end
+
+  #
+  # query with no database name reports a setup error and returns no
+  # result (so Query treats it as a failure).
+  #
+  def test_query_with_no_database_name_returns_no_result
+    obj = build_sqlite_obj( '' )
+    assert_nil obj.query( 'SELECT 1' )
+    assert_equal Sqlite::DB_REQUIRED_ERR, @engine.heap.error.value
+  end
+
+  #
+  # Bad SQL comes out of the driver as a database error, for Query
+  # to report.
+  #
+  def test_query_with_bad_sql_raises_a_database_error
+    Dir.mktmpdir do |dir|
+      obj = build_sqlite_obj( File.join( dir, 'bad.db' ) )
+      error = assert_raises( SQLite3::Exception ) { obj.query( 'SELEC nope' ) }
+      assert obj.database_errors.any? { |c| error.is_a?( c ) }
+    end
+  end
+
+  #
+  # The database is closed after each query, and after a failed one.
+  #
+  def test_query_closes_the_database
+    Dir.mktmpdir do |dir|
+      path = File.join( dir, 'close.db' )
+      obj = build_sqlite_obj( path )
+      db = SQLite3::Database.open( path )
+      SQLite3::Database.stub( :open, db ) { obj.query( 'SELECT 1' ) }
+      assert db.closed?
+
+      db2 = SQLite3::Database.open( path )
+      SQLite3::Database.stub( :open, db2 ) do
+        assert_raises( SQLite3::Exception ) { obj.query( 'SELEC nope' ) }
+      end
+      assert db2.closed?
+    end
+  end
+
+  #
+  # Set up a query object (q) on the sqlite connection (o) with the
+  # given SQL.
+  #
+  def build_query( path, sql )
+    build_sqlite_obj( path )
+    @engine.parser.run 'create q as query'
+    @engine.parser.run "put 'o' into q.database*"
+    @engine.parser.run "put '#{sql}' into q.sql"
+    return @engine.heap.root.find_child( 'q' )
+  end
+
+  #
+  # Through gloo-db's query: a query that works puts true in it.
+  #
+  def test_query_run_puts_true_in_it
+    Dir.mktmpdir do |dir|
+      build_query( File.join( dir, 'run.db' ), 'CREATE TABLE t ( id INTEGER )' )
+      @engine.parser.run 'tell q to run'
+      assert_equal true, @engine.heap.it.value
+      refute @engine.error?
+    end
+  end
+
+  #
+  # Through gloo-db's query: bad SQL is one readable error, and it is
+  # false.
+  #
+  def test_query_run_with_bad_sql_is_a_readable_error
+    Dir.mktmpdir do |dir|
+      build_query( File.join( dir, 'run2.db' ), 'SELECT * FROM nope' )
+      @engine.parser.run 'tell q to run'
+      assert_equal 'Query failed: no such table: nope', @engine.heap.error.value
+      assert_equal false, @engine.heap.it.value
+    end
   end
 
 end

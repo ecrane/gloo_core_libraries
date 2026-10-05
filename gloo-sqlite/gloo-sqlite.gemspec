@@ -33,6 +33,13 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'sqlite3', '~> 1.4', '>= 1.4.2'
 
   #
+  # Uses gloo 7.0 error handling, and gloo-db's shared driver code
+  # (DbConnection) and QueryResult
+  #
+  spec.add_dependency 'gloo', '>= 7.0'
+  spec.add_dependency 'gloo-db', '>= 1.3'
+
+  #
   # Development Dependencies
   #
   spec.add_development_dependency 'bundler'

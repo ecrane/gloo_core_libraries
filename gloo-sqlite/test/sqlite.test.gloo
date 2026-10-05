@@ -42,6 +42,17 @@ tests [can] :
       result [can] :
         name [alias] : tests.sqlite.found_name
 
+    # Queries for the error paths through gloo-db's query.
+    no_sql [query] :
+      database [alias] : tests.sqlite.conn
+    bad_sql [query] :
+      database [alias] : tests.sqlite.conn
+      sql : SELECT * FROM no_such_table
+
+    # A connection with no database name.
+    unnamed [sqlite] :
+      database :
+
     sqlite_object [test] :
       description [string] : The sqlite object exists
       on_test [script] :
@@ -109,3 +120,41 @@ tests [can] :
         assert "expected the aliased result column to be filled in"
 
         tell tests.sqlite.dbfile to delete
+
+    query_run_puts_true_in_it [test] :
+      description [string] : a query that runs puts true in it
+      on_test [script] :
+        run tests.sqlite.make
+        assert "expected a query that runs to put true in it"
+        tell tests.sqlite.dbfile to delete
+
+    query_with_bad_sql [test] :
+      description [string] : bad SQL is a readable error and puts false in it
+      expect_errors [bool] : true
+      on_test [script] :
+        tell tests.sqlite.bad_sql to run
+        refute "expected bad SQL to put false in it"
+        tell tests.sqlite.dbfile to delete
+
+    query_with_no_sql [test] :
+      description [string] : a query with no SQL is an error and puts false in it
+      expect_errors [bool] : true
+      on_test [script] :
+        tell tests.sqlite.no_sql to run
+        refute "expected a query with no SQL to put false in it"
+
+    verify_a_database [test] :
+      description [string] : verify puts true in it for a database that opens
+      on_test [script] :
+        run tests.sqlite.make
+        tell tests.sqlite.conn to verify
+        assert "expected verify to put true in it"
+        tell tests.sqlite.dbfile to delete
+
+    verify_with_no_database_name [test] :
+      description [string] : verify with no database name is an error and puts false in it
+      expect_errors [bool] : true
+      on_test [script] :
+        tell tests.sqlite.unnamed to verify
+        refute "expected verify with no database name to put false in it"
+

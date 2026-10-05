@@ -16,8 +16,12 @@
 # replace `db.query()` with `db.get_first_value()`.
 #
 require 'sqlite3'
+require 'db_connection'
 
 class Sqlite < Gloo::Core::Obj
+
+  # Shared driver behaviour from gloo-db: errors, verify, setup problems.
+  include DbConnection
 
   KEYWORD = 'sqlite'.freeze
   KEYWORD_SHORT = 'sqlite'.freeze
@@ -93,9 +97,22 @@ class Sqlite < Gloo::Core::Obj
       return
     end
 
-    return unless connects?
+    verify_connection do
+      db = SQLite3::Database.open name
+      begin
+        db.get_first_value "SELECT COUNT(name) FROM sqlite_master WHERE type='table'"
+      ensure
+        db.close
+      end
+    end
+  end
 
-    @engine.heap.it.set_to true
+  #
+  # The exception classes that are database errors (DbConnection):
+  # Query reports these as 'Query failed: …'.
+  #
+  def database_errors
+    return [ SQLite3::Exception ]
   end
 
   # ---------------------------------------------------------------------
@@ -108,23 +125,25 @@ class Sqlite < Gloo::Core::Obj
   #
   def query( sql, params = nil )
     name = db_value
-    unless name
-      @engine.err DB_REQUIRED_ERR
-      return [ [], [] ]
-    end
+    return setup_err( DB_REQUIRED_ERR ) if name.empty?
 
+    # A database file that doesn't exist is created.
     db = SQLite3::Database.open name
-    # db.results_as_hash = true
-    results = db.query( sql, params )
+    begin
+      results = db.query( sql, params )
 
-    rows = []
-    while ( row = results.next ) do
-      rows << row
+      rows = []
+      while ( row = results.next ) do
+        rows << row
+      end
+
+      # Return [ column names, rows ] - the same shape as gloo-mysql and
+      # gloo-pg, so callers (Query, Table) can treat every backend alike.
+      return [ results.columns, rows ]
+    ensure
+      results&.close
+      db.close
     end
-
-    # Return [ column names, rows ] - the same shape as gloo-mysql and
-    # gloo-pg, so callers (Query, Table) can treat every backend alike.
-    return [ results.columns, rows ]
   end
 
   #
@@ -143,30 +162,13 @@ class Sqlite < Gloo::Core::Obj
 
   #
   # Get the Database file from the child object.
-  # Returns nil if there is none.
+  # Returns '' if there is none.
   #
   def db_value
     o = find_child DB
-    return nil unless o
+    return '' unless o
 
-    return o.value
-  end
-
-  #
-  # Try the connection and make sure it works.
-  # Returns true if we can connect and do a query.
-  #
-  def connects?
-    begin
-      db = SQLite3::Database.open db_value
-      sql = "SELECT COUNT(name) FROM sqlite_master WHERE type='table'"
-      db.get_first_value sql
-    rescue => e
-      @engine.log_exception e
-      @engine.heap.it.set_to false
-      return false
-    end
-    return true
+    return o.value.to_s
   end
 
   # ---------------------------------------------------------------------
@@ -182,10 +184,10 @@ class Sqlite < Gloo::Core::Obj
       :shortcut => KEYWORD_SHORT,
       :description => 'A Sqlite3 database connection.',
       :children => [
-        "database (string) — Default: '#{DEFAULT_DB}'. The path to the database file."
+        "database (string) — Default: '#{DEFAULT_DB}'. The path to the database file. A query on a file that does not exist creates a new, empty database there."
       ],
       :messages => [
-        'verify — Verify that the database connection can be established.'
+        'verify — Verify that the database connection can be established. It is true if it can, false if not: no database name, a file that does not exist, or a file that is not a database (with the reason in the error).'
       ],
       :examples => <<~EXAMPLES.strip
         sqlite [can] :
