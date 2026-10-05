@@ -12,16 +12,40 @@ require 'test_helper'
 #
 class FakePgConnection
 
-  def initialize( rows )
+  attr_reader :closed
+
+  #
+  # Set up with the rows to return, or an error to raise.
+  #
+  def initialize( rows, error = nil )
     @rows = rows
+    @error = error
+    @closed = false
   end
 
+  #
+  # Run a query: return the rows, or raise the error.
+  #
   def exec( _sql )
+    raise @error if @error
+
     return @rows
   end
 
+  #
+  # Run a query with parameters.
+  #
   def exec_params( _sql, _params )
+    raise @error if @error
+
     return @rows
+  end
+
+  #
+  # Close the connection.
+  #
+  def close
+    @closed = true
   end
 
 end
@@ -87,7 +111,7 @@ class PgTest < BaseEngineTest
     end
 
     assert_equal false, @engine.heap.it.value
-    assert @engine.error?
+    assert_equal "Could not connect to postgres 'o': simulated connection failure", @engine.heap.error.value
   end
 
   def test_verify_returns_true_when_the_client_connects
@@ -136,11 +160,8 @@ class PgTest < BaseEngineTest
   end
 
   #
-  # Same shape as gloo-mysql/gloo-sqlite: the connection itself
-  # (pg_conn, called before query's own logic) isn't wrapped in a
-  # rescue here, so a connection failure raises rather than being
-  # swallowed into an empty result. Query#run_query (gloo-db), the
-  # actual caller, has its own outer rescue for exactly this.
+  # A connection failure comes out of query as an exception, for
+  # gloo-db's Query to report (the shared driver rule).
   #
   def test_query_raises_when_the_connection_itself_fails
     o = create_pg
@@ -158,6 +179,55 @@ class PgTest < BaseEngineTest
 
     assert_kind_of QueryResult, result
     assert result.has_data_to_show?
+  end
+
+  #
+  # verify closes the connection it opened.
+  #
+  def test_verify_closes_the_connection
+    o = create_pg
+    conn = FakePgConnection.new( [] )
+    PG.stub( :connect, ->( *_args, **_kwargs ) { conn } ) { o.msg_verify }
+    assert conn.closed
+  end
+
+  #
+  # query closes its connection, also when the query fails.
+  #
+  def test_query_closes_the_connection
+    o = create_pg
+    conn = FakePgConnection.new( [] )
+    PG.stub( :connect, ->( *_args, **_kwargs ) { conn } ) { o.query( 'SELECT 1' ) }
+    assert conn.closed
+
+    bad = FakePgConnection.new( [], PG::Error.new( 'bad' ) )
+    PG.stub( :connect, ->( *_args, **_kwargs ) { bad } ) do
+      assert_raises( PG::Error ) { o.query( 'SELEC 1' ) }
+    end
+    assert bad.closed
+  end
+
+  #
+  # PG errors are the driver's database errors.
+  #
+  def test_database_errors
+    assert_equal [ PG::Error ], create_pg.database_errors
+  end
+
+  #
+  # Through gloo-db's query: a database error is one readable error,
+  # and it is false.
+  #
+  def test_query_run_with_a_database_error_is_a_readable_error
+    create_pg
+    @engine.parser.run 'create q as query'
+    @engine.parser.run "put 'o' into q.database*"
+    @engine.parser.run "put 'SELECT * FROM nope' into q.sql"
+    conn = FakePgConnection.new( [], PG::Error.new( 'relation "nope" does not exist' ) )
+    PG.stub( :connect, ->( *_args, **_kwargs ) { conn } ) { @engine.parser.run 'tell q to run' }
+
+    assert_equal 'Query failed: relation "nope" does not exist', @engine.heap.error.value
+    assert_equal false, @engine.heap.it.value
   end
 
 end

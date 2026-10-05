@@ -7,8 +7,12 @@
 #   https://github.com/ged/ruby-pg
 #   
 require 'pg'
+require 'db_connection'
 
 class Pg < Gloo::Core::Obj
+
+  # Shared driver behaviour from gloo-db: errors, verify, setup problems.
+  include DbConnection
 
   KEYWORD = 'postgres'.freeze
   KEYWORD_SHORT = 'pg'.freeze
@@ -70,12 +74,26 @@ class Pg < Gloo::Core::Obj
   end
 
   #
-  # SSH to the host and execute the command, then update result.
+  # Verify that the database connection can be established.
+  # It is true if it can, false if not (with the reason in the error).
   #
   def msg_verify
-    return unless connects?
+    verify_connection do
+      conn = pg_conn
+      begin
+        conn.exec( 'SELECT NOW()' )
+      ensure
+        conn.close
+      end
+    end
+  end
 
-    @engine.heap.it.set_to true
+  #
+  # The exception classes that are database errors (DbConnection):
+  # Query reports these as 'Query failed: …'.
+  #
+  def database_errors
+    return [ PG::Error ]
   end
 
   # ---------------------------------------------------------------------
@@ -90,31 +108,36 @@ class Pg < Gloo::Core::Obj
     heads = []
     data = []
     client = pg_conn
+    # Database errors come out as exceptions, for Query to report.
+    begin
 
-    if params
-      param_arr =  []
-      params.each do |p|
-        param_arr << { :value => p, :type => 0, :format => 0 }
-      end
-      rs = client.exec_params( sql, params )
-    else
-      rs = client.exec( sql )
-    end
-
-    if rs && ( rs.count > 0 )
-      rs[0].each do |name, val|
-        heads << name
-      end
-      rs.each_with_index do |row, index|
-        arr = []
-        row.each do |name, val|
-          arr << val
+      if params
+        param_arr =  []
+        params.each do |p|
+          param_arr << { :value => p, :type => 0, :format => 0 }
         end
-        data << arr
+        rs = client.exec_params( sql, params )
+      else
+        rs = client.exec( sql )
       end
-    end
 
-    return [ heads, data ]
+      if rs && ( rs.count > 0 )
+        rs[0].each do |name, val|
+          heads << name
+        end
+        rs.each_with_index do |row, index|
+          arr = []
+          row.each do |name, val|
+            arr << val
+          end
+          data << arr
+        end
+      end
+
+      return [ heads, data ]
+    ensure
+      client.close
+    end
   end
 
   # 
@@ -180,21 +203,6 @@ class Pg < Gloo::Core::Obj
   end
 
   #
-  # Try the connection and make sure it works.
-  # Returns true if we can establish a connection.
-  #
-  def connects?
-    begin
-      result = pg_conn.exec( "SELECT NOW()" )
-    rescue => e
-      @engine.log_exception e
-      @engine.heap.it.set_to false
-      return false
-    end
-    return true
-  end
-
-  #
   # Get the PG connection.
   #
   def pg_conn
@@ -228,7 +236,7 @@ class Pg < Gloo::Core::Obj
         "password (string) — The user's password."
       ],
       :messages => [
-        'verify — Verify that the database connection can be established.'
+        'verify — Verify that the database connection can be established. It is true if it can, false if not (with the reason in the error).'
       ],
       :notes => 'No vault documentation exists for this object type — ' \
         'this was authored directly from the code (same shape as ' \

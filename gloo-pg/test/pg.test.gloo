@@ -5,6 +5,13 @@
 # # were, nothing here connects to a real one - same discipline as
 # # gloo-mysql. Structure only: typename, messages, default children.
 # #
+# An empty root so this file loads cleanly (an all-comment file is
+# reported as 'Error loading file'). The structure-only tests below
+# stay commented out until gloo-pg is installed: 'load lib pg' only
+# loads an installed gem.
+tests [can] :
+  pg [can] :
+
 # tests [can] :
 #   pg [can] :
 
