@@ -314,12 +314,28 @@ module Objs
     end
 
     #
-    # Get the expiration date for the certificate.
+    # Render the page and put the content (HTML, JSON or text) in it,
+    # or false if it can't render. Only works inside a running web app.
     #
     def msg_render
-      content = self.render
-      @engine.heap.it.set_to content 
+      return nil unless Page.can_render?( @engine, self )
+
+      response = self.render
+      content = response&.data
+      @engine.heap.it.set_to( content.nil? ? false : content )
       return content
+    end
+
+    #
+    # Is a web app running, so the object can render? If not, report
+    # it and put false in it. Shared with partial.
+    #
+    def self.can_render?( engine, obj )
+      return true if engine.app_running?
+
+      engine.err "#{obj.type_display} '#{obj.name}' can only render inside a web app (gloo-web)."
+      engine.heap.it.set_to false
+      return false
     end
 
 
@@ -584,7 +600,7 @@ module Objs
           'download_file (boolean) — Optional, default false. If true, the browser is instructed to download the file instead of rendering it.'
         ],
         :messages => [
-          'render — Manually render the content of the page. Normally the render is called by the web server when the page is requested.'
+          'render — Manually render the content of the page; the content (HTML, JSON or text) is put in it, or false if it can\'t render. Only works inside a running web app (it is an error otherwise). Normally the render is called by the web server when the page is requested.'
         ],
         :examples => <<~EXAMPLES.strip
           page [can] :

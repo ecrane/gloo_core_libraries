@@ -260,7 +260,7 @@ module Objs
       begin
         return e.render( 'render_html' )
       rescue => e
-        @engine.log_exception e
+        @engine.handle_exception e
         return ''
       end
     end
@@ -286,7 +286,7 @@ module Objs
           'content (container) — The collection of form fields. Other elements can also be included here, for formatting or extra buttons.'
         ],
         :messages => [
-          'render — Manually render the HTML form. Normally the render is called by the web server when the page containing the element is requested.'
+          'render — Manually render the HTML form; the HTML is put in it. Normally the render is called by the web server when the page containing the element is requested.'
         ],
         :examples => <<~EXAMPLES.strip
           page [can] :

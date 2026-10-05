@@ -9,12 +9,14 @@
 #   https://en.wikipedia.org/wiki/HTTP_cookie
 #   
 require 'base64'
+require 'openssl'
 
 module WebSvr
   class Session
 
     SESSION_CONTAINER = 'session'.freeze
     SESSION_ID_NAME = 'session_id'.freeze
+    SESSION_UNREADABLE = 'Session cookie could not be read; starting a new session.'.freeze
 
     
     # ---------------------------------------------------------------------
@@ -64,7 +66,8 @@ module WebSvr
           end
         end
       rescue => e
-        @engine.log_exception e
+        # Not expected: a bad cookie is handled in decode_decrypt.
+        @engine.handle_exception e
       end
     end
 
@@ -166,8 +169,10 @@ module WebSvr
       begin
         data = Gloo::Objs::Cipher.decrypt( data, key, iv )
         return JSON.parse( data )
-      rescue => e
-        @engine.log_exception e
+      rescue OpenSSL::Cipher::CipherError, JSON::ParserError
+        # The cookie was made with another key, or has been changed.
+        # Not the app's error: the visitor gets a new session.
+        @engine.warn SESSION_UNREADABLE
         return nil
       end
     end

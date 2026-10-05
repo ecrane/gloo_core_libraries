@@ -7,7 +7,10 @@
 
 module WebSvr
   class Handler
-    
+
+    SERVER_ERR_MSG = 'Server error!'.freeze
+    NOT_FOUND_MSG = 'Not found'.freeze
+
     attr_reader :server_obj
 
 
@@ -55,7 +58,7 @@ module WebSvr
           page_obj = page
         end
       else
-        result = server_error_result
+        result = not_found_result
       end
 
       return result, page_obj
@@ -87,7 +90,7 @@ module WebSvr
 
       # Check to make sure it is a valid file
       # return error if it is not
-      return file_error_result unless File.exist? pn
+      return not_found_result unless File.exist? pn
 
       return @server_obj.asset.render_file pn
     end
@@ -98,25 +101,37 @@ module WebSvr
     # ---------------------------------------------------------------------
 
     # 
-    # Return a server error result.
-    # Use the app's error if there is one, otherwise a generic message.
+    # Return a server error result: the app's error page, or a generic
+    # message, sent as a 500.
     # 
     def server_error_result
-      err_page = @server_obj.err_page
-      return err_page.render if err_page
+      return page_or_text_result( @server_obj.err_page,
+        SERVER_ERR_MSG, WebSvr::ResponseCode::SERVER_ERR )
+    end
 
-      # Last resort, just return a generic error message.
-      return WebSvr::Response.text_response( @engine, 
-        "Server error!", WebSvr::ResponseCode::SERVER_ERR )
-    end    
-  
     # 
-    # Get a file not found error result.
+    # Return a not found result: the app's not found page, or a generic
+    # message, sent as a 404.
     # 
-    def file_error_result
-      return WebSvr::Response.text_response( @engine, 
-        "File not found!", WebSvr::ResponseCode::NOT_FOUND )
-    end    
+    def not_found_result
+      return page_or_text_result( @server_obj.not_found_page,
+        NOT_FOUND_MSG, WebSvr::ResponseCode::NOT_FOUND )
+    end
+
+    # 
+    # Render the given page with the given status code, whatever the
+    # page's own return code. Without a page, or if it doesn't render,
+    # send the message as text.
+    # 
+    def page_or_text_result( page, msg, code )
+      result = page.render if page.is_a?( Objs::Page )
+      if result
+        result.code = code
+        return result
+      end
+
+      return WebSvr::Response.text_response( @engine, msg, code )
+    end
 
 
     # ---------------------------------------------------------------------

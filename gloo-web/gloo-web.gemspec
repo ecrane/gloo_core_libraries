@@ -51,6 +51,11 @@ Gem::Specification.new do |spec|
   spec.require_paths = ['lib']
 
   #
+  # Uses gloo 7.0's error handling (handle_exception, warn)
+  #
+  spec.add_dependency 'gloo', '>= 7.0'
+
+  #
   # Web specific dependencies
   #
   spec.add_dependency 'thin', '~> 1.8.2'

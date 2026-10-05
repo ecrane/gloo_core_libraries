@@ -58,9 +58,10 @@ module Objs
     # Default layout for pages.
     LAYOUT = 'layout'.freeze
 
-    # Alias to the home and error pages
+    # Alias to the home, error and not found pages
     HOME = 'home'.freeze
     ERR_PAGE = 'error'.freeze
+    NOT_FOUND_PAGE = 'not_found'.freeze
 
     # Session
     SESSION = 'session'.freeze
@@ -68,6 +69,7 @@ module Objs
 
     # Messages
     SERVER_NOT_RUNNING = 'The web server is not running!'.freeze
+    SERVER_ALREADY_RUNNING = 'The web server is already running!'.freeze
 
     # 
     # Should the current request be redirected?
@@ -124,12 +126,19 @@ module Objs
     # ---------------------------------------------------------------------
 
     #
+    # Get the config child with the given name.
+    # Returns nil if there is none, or no config container.
+    #
+    def config_child( name )
+      return find_child( CONFIG )&.find_child( name )
+    end
+
+    #
     # Get the Scheme (http or https) from the child object.
     # Returns nil if there is none.
     #
     def scheme_value
-      config = find_child CONFIG
-      scheme = config.find_child SCHEME
+      scheme = config_child SCHEME
       return nil unless scheme
 
       return scheme.value
@@ -140,8 +149,7 @@ module Objs
     # Returns nil if there is none.
     #
     def host_value
-      config = find_child CONFIG
-      host = config.find_child HOST
+      host = config_child HOST
       return nil unless host
 
       return host.value
@@ -152,8 +160,7 @@ module Objs
     # Returns nil if there is none.
     #
     def port_value
-      config = find_child CONFIG
-      port = config.find_child PORT
+      port = config_child PORT
       return nil unless port
 
       return port.value
@@ -171,8 +178,7 @@ module Objs
     # Get the session cookie name.
     # 
     def session_name
-      config = find_child CONFIG
-      session_name = config.find_child SESSION_NAME
+      session_name = config_child SESSION_NAME
       return nil unless session_name
 
       name = session_name.value
@@ -185,8 +191,7 @@ module Objs
     # Get the key for the encryption cipher.
     # 
     def encryption_key
-      config = find_child CONFIG
-      o = config.find_child ENCRYPT_KEY
+      o = config_child ENCRYPT_KEY
       return nil unless o
 
       o = Gloo::Objs::Alias.resolve_alias( @engine, o )
@@ -197,8 +202,7 @@ module Objs
     # Get the initialization vector for the cipher.
     # 
     def encryption_iv
-      config = find_child CONFIG
-      o = config.find_child ENCRYPT_IV
+      o = config_child ENCRYPT_IV
       return nil unless o
 
       o = Gloo::Objs::Alias.resolve_alias( @engine, o )
@@ -210,8 +214,7 @@ module Objs
     # If not specified, use the root path.
     # 
     def session_cookie_path
-      config = find_child CONFIG
-      o = config.find_child COOKIE_PATH
+      o = config_child COOKIE_PATH
       if o
         return o.value
       else
@@ -224,8 +227,7 @@ module Objs
     # If not specified, use one week from now.
     # 
     def session_cookie_expires
-      config = find_child CONFIG
-      o = config.find_child COOKIE_EXPIRES
+      o = config_child COOKIE_EXPIRES
       if o
         dt = Chronic.parse( o.value )
         return dt
@@ -239,7 +241,7 @@ module Objs
     # Get the value from the scheme settings/config.
     # 
     def session_cookie_secure
-      return scheme_value.downcase == HTTPS
+      return scheme_value&.downcase == HTTPS
     end
 
 
@@ -392,6 +394,7 @@ module Objs
       fac.create_alias LAYOUT, nil, self
       fac.create_alias HOME, nil, self
       fac.create_alias ERR_PAGE, nil, self
+      fac.create_alias NOT_FOUND_PAGE, nil, self
 
       fac.create_can PAGES, self
     end
@@ -415,6 +418,11 @@ module Objs
     # Start the gloo web server.
     #
     def msg_start
+      if @engine.app_running?
+        @engine.err SERVER_ALREADY_RUNNING
+        return
+      end
+
       @engine.log.debug "Starting web server…"
       # @engine.log.quiet = true
 
@@ -522,12 +530,14 @@ module Objs
     # Start running the web server.
     # 
     def start
-      config = WebSvr::Config.new( scheme_value, host_value, port_value )
+      # Settings that aren't given use the defaults.
+      config = WebSvr::Config.new( scheme_value || WebSvr::Config::HTTP,
+        host_value || WebSvr::Config::LOCALHOST,
+        port_value || WebSvr::Config::PORT_DEFAULT )
       @engine.log.info "Web Server URL: #{config.base_url}"
 
       handler = WebSvr::Handler.new( @engine, self )
       @web_server = WebSvr::Server.new( @engine, handler, config, ssl_config )
-      @web_server.start
 
       @router = Routing::Router.new( @engine, self )
       @router.add_page_routes
@@ -540,6 +550,10 @@ module Objs
       @session = WebSvr::Session.new( @engine, self )
       
       run_on_start
+
+      # Listen last: if the server can't start, it stops the running
+      # app from its own thread, so everything else must be done.
+      @web_server.start
       @engine.log.info "Web server started and listening…"
     end
 
@@ -658,7 +672,7 @@ module Objs
           data.find_child( PAGE )&.set_value( page_obj.pn ) 
         end
       rescue => e
-        @engine.log_exception e
+        @engine.handle_exception e
       end
     end
 
@@ -696,6 +710,17 @@ module Objs
       return o
     end
 
+    # 
+    # Get the application not found page.
+    # 
+    def not_found_page
+      o = find_child NOT_FOUND_PAGE
+      return nil unless o
+
+      o = Gloo::Objs::Alias.resolve_alias( @engine, o )
+      return o
+    end
+
     #
     # Get the default layout for pages.
     #
@@ -720,12 +745,13 @@ module Objs
         :shortcut => KEYWORD_SHORT,
         :description => 'A web server running inside gloo.',
         :children => [
-          'config (container) — Configuration and settings for the server. See below for its children.',
+          'config (container) — Configuration and settings for the server. See below for its children. Settings left out use the defaults.',
           'on_start (script) — Run when the web server is started.',
           'on_stop (script) — Run when the web server is stopped.',
           "layout (partial) — By convention an alias pointing to the layout used for all pages (layouts live in the layout root-level folder).",
           'home (page) — By convention an alias pointing to the home page object (pages live in the page root-level folder).',
-          'error (page) — By convention an alias pointing to the default error page object.',
+          'error (page) — By convention an alias pointing to the default error page object. Sent with a 500 when a request fails; without one, a plain "Server error!" is sent.',
+          'not_found (page) — By convention an alias pointing to the page sent with a 404 when no route or file matches the request; without one, a plain "Not found" is sent.',
           'pages (container) — Routes. By convention, aliases pointing to pages in the page root-level folder.',
           'config.scheme (string) — \'http\' or \'https\'.',
           "config.host (string) — Default: 'localhost'.",
@@ -735,16 +761,16 @@ module Objs
           'config.encryption_iv (string) — Optional. Initialization vector for the session cookie encryption key.',
           "config.cookie_expires (string) — Optional, default 'in 1 week'. When the session expires.",
           "config.cookie_path (string) — Optional, default '/'. The path for the session cookie.",
-          'config.ssl_cert (string) — Optional, required for SSL. Path to certificate.pem.',
-          'config.ssl_key (string) — Optional, required for SSL. Path to key.pem.',
+          'ssl_cert (string or file) — Optional, required for SSL; a child of the server, not of config. Path to certificate.pem. May be an alias.',
+          'ssl_key (string or file) — Optional, required for SSL; a child of the server, not of config. Path to key.pem. May be an alias.',
           'on_request (script) — Optional. Run when the web server receives a request.',
           'request_data (container) — Optional. Data available for use in on_request or elsewhere in the page rendering life-cycle: method, host, path, query, ip (all string, all optional, populated only if present).',
           'on_response (script) — Optional. Run when the web server is done rendering and about to return a response.',
           'response_data (container) — Optional. Data available for use in on_response (request_data is also available at this point): page, type, code, elapsed, db (all string, all optional, populated only if present).'
         ],
         :messages => [
-          'start — Start the web server.',
-          'stop — Stop the web server.',
+          'start — Start the web server. It is an error if a web server is already running. If it can\'t listen on its port (in use, or needs root privileges), that is reported as an error and the server stops.',
+          'stop — Stop the web server. It is an error if it is not running.',
           'list_routes — Show the routing table. A debugging tool.',
           'list_assets — Show the list of assets. A debugging tool.',
           'list_asset_img — Show the list of image assets. A debugging tool.',
@@ -773,6 +799,7 @@ module Objs
               layout [alias] : layout.primary
               home [alias] : page.home
               error [alias] : page.err
+              not_found [alias] : page.not_found
 
               # Routes for the web server.
               pages [container] :

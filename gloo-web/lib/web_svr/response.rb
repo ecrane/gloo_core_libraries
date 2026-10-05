@@ -16,7 +16,8 @@ module WebSvr
     JSON_TYPE = 'application/json'.freeze
     HTML_TYPE = 'text/html'.freeze
           
-    attr_reader :code, :type, :data
+    attr_reader :type, :data
+    attr_accessor :code
     attr_accessor :location
     attr_accessor :file_name
     

@@ -98,7 +98,7 @@ module WebSvr
     # 
     # Handle a missing method by looking for a helper function.
     # If there is one, then call it and return the result.
-    # If not, log an error and return nil.
+    # If not, report an error and return nil (it renders as blank).
     # 
     def method_missing( method_name, *args )
       @log.debug "missing method '#{method_name}' with args #{args}"
@@ -108,11 +108,13 @@ module WebSvr
 
       pn = Gloo::Core::Pn.new( @engine, helper_pn )
       obj = pn.resolve
-      if obj
+      if obj.nil?
+        @engine.err "Helper function '#{method_name}' was not found; add it as #{helper_pn}."
+      elsif !obj.respond_to?( :invoke )
+        @engine.err "'#{helper_pn}' is not a function."
+      else
         @log.debug "found obj: #{obj.pn}"
         return obj.invoke args
-      else
-        @log.error "Function not found: #{helper_pn}"        
       end
 
       return nil

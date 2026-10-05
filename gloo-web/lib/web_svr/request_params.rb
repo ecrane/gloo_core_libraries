@@ -53,6 +53,9 @@ module WebSvr
         begin
           @body_params = Rack::Utils.parse_query body
         rescue => exception
+          # A binary body (a file upload) isn't a query string and
+          # fails to parse; read it as multipart instead. Any problem
+          # with that is reported there.
           init_multipart body 
         end
       else
@@ -101,8 +104,7 @@ module WebSvr
         @body_params[ 'file_size' ] = binary_data.length
         @body_params[ 'file_data' ] = binary_data
       rescue => ex
-        @engine.log_exception ex
-        # @log.error "Error parsing multipart request", ex
+        @engine.err "Could not read the uploaded file: #{ex.message}"
       end
     end
 

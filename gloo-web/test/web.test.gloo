@@ -59,6 +59,12 @@ tests [can] :
         exists? instance tests.web.s2.pages
         assert "expected server to have a pages child"
 
+        exists? instance tests.web.s2.error*
+        assert "expected server to have an error child"
+
+        exists? instance tests.web.s2.not_found*
+        assert "expected server to have a not_found child"
+
         eval tests.web.s2.config.scheme = 'http'
         assert "expected server's default scheme to be 'http'"
 
@@ -77,6 +83,24 @@ tests [can] :
 
         check ^^.part for responds_to? ('render')
         assert 'expected a partial to be able to render'
+
+    page_render_outside_web_app [test] :
+      description [string] : A page can't render outside a running web app; it is false
+      expect_errors [bool] : true
+      on_test [script] :
+        create tests.web.p3 as page
+
+        tell tests.web.p3 to render
+        refute "expected it to be false when the page can't render"
+
+    partial_render_outside_web_app [test] :
+      description [string] : A partial can't render outside a running web app; it is false
+      expect_errors [bool] : true
+      on_test [script] :
+        create tests.web.part3 as partial
+
+        tell tests.web.part3 to render
+        refute "expected it to be false when the partial can't render"
 
     page_default_children [test] :
       description [string] : page default children include head and body elements

@@ -453,7 +453,7 @@ module Objs
           'checked (boolean) — Optional; only used for checkbox fields. Whether the checkbox field is checked.'
         ],
         :messages => [
-          'render — Manually render the HTML field. Normally the render is called by the web server when the page containing the element is requested.'
+          'render — Manually render the HTML field; the HTML is put in it. Normally the render is called by the web server when the page containing the element is requested.'
         ],
         :examples => <<~EXAMPLES.strip
           f [form] :

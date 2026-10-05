@@ -169,7 +169,7 @@ module Objs
     end
 
     #
-    # Get the expiration date for the certificate.
+    # Render the element as HTML and put it in it.
     #
     def msg_render
       content = self.render_html
@@ -239,11 +239,15 @@ module Objs
       return rendered_obj_content
     end
 
+    #
+    # Render a string or other object; an unexpected failure is
+    # handled and renders as blank.
+    #
     def self.render_thing e, render_ƒ, engine
       begin
         return e.render( render_ƒ )
       rescue => e
-        engine.log_exception e
+        engine.handle_exception e
         return ''
       end
     end
@@ -265,7 +269,7 @@ module Objs
           'content (container) — The element contents.'
         ],
         :messages => [
-          'render — Manually render the HTML element. Normally the render is called by the web server when the page containing the element is requested.'
+          'render — Manually render the HTML element; the HTML is put in it. Normally the render is called by the web server when the page containing the element is requested.'
         ],
         :examples => <<~EXAMPLES.strip
           div_sub [e] :

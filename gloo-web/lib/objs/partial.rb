@@ -140,11 +140,14 @@ module Objs
     end
 
     #
-    # Get the expiration date for the certificate.
+    # Render the partial and put the HTML in it, or false if it can't
+    # render. Only works inside a running web app.
     #
     def msg_render
+      return nil unless Page.can_render?( @engine, self )
+
       part_content = self.render
-      @engine.heap.it.set_to part_content 
+      @engine.heap.it.set_to( part_content.nil? ? false : part_content )
       return part_content
     end
 
@@ -226,7 +229,7 @@ module Objs
           'content (element) — The contents of the partial page.'
         ],
         :messages => [
-          'render — Manually render the content of the partial page. Normally the render is called by the web server when the page containing the partial is requested.'
+          'render — Manually render the content of the partial page; the HTML is put in it, or false if it can\'t render. Only works inside a running web app (it is an error otherwise). Normally the render is called by the web server when the page containing the partial is requested.'
         ],
         :examples => <<~EXAMPLES.strip
           shared [can] :

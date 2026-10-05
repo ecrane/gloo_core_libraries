@@ -76,4 +76,48 @@ class SessionTest < BaseEngineTest
     assert_equal '_my_app_session', session.session_name
   end
 
+  #
+  # A session whose server uses the given base64 key and iv.
+  #
+  def session_with_key( key, iv )
+    session = WebSvr::Session.new( @engine, create_svr )
+    session.define_singleton_method( :key ) { key }
+    session.define_singleton_method( :iv ) { iv }
+    return session
+  end
+
+  #
+  # A new random base64 key and iv for the session cipher.
+  #
+  def random_key_iv
+    cipher = OpenSSL::Cipher.new( Gloo::Objs::Cipher::CIPHER_TYPE )
+    return Base64.encode64( cipher.random_key ), Base64.encode64( cipher.random_iv )
+  end
+
+  #
+  # A cookie made with the session's key reads back.
+  #
+  def test_decode_decrypt_reads_a_good_cookie
+    key, iv = random_key_iv
+    session = session_with_key( key, iv )
+
+    cookie = session.encrypt_encode( { 'session_id' => 'abc' } )
+    assert_equal( { 'session_id' => 'abc' }, session.decode_decrypt( cookie ) )
+  end
+
+  #
+  # A cookie made with another key is a warning, not an error, and
+  # gives no data: the visitor gets a new session.
+  #
+  def test_decode_decrypt_warns_on_a_cookie_it_cannot_read
+    key, iv = random_key_iv
+    other_key, _ = random_key_iv
+    cookie = session_with_key( other_key, iv ).encrypt_encode( { 'a' => 1 } )
+    session = session_with_key( key, iv )
+
+    warnings = capture_warnings { assert_nil session.decode_decrypt( cookie ) }
+    assert_equal [ WebSvr::Session::SESSION_UNREADABLE ], warnings
+    refute @engine.error?
+  end
+
 end

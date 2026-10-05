@@ -25,7 +25,11 @@ require 'rack'
 
 module WebSvr
   class Server
-  
+
+    # EventMachine (under Thin) raises a RuntimeError starting with this
+    # when it can't listen: the port is in use or needs root.
+    NO_ACCEPTOR = 'no acceptor'.freeze
+
     # ---------------------------------------------------------------------
     #    Initialization
     # ---------------------------------------------------------------------
@@ -52,20 +56,34 @@ module WebSvr
     # Start the web server.
     # 
     def start
+      @server_thread = Thread.new { run_server }
+      @log.debug 'Web server has started.'
+    end
+
+    # 
+    # Run the web server. This doesn't return while the server is
+    # running, so it runs in its own thread. If the server fails, it is
+    # reported here and the running app is stopped.
+    # 
+    def run_server
       opts = {
         :Port => @config.port,
         :Host => @config.host
       }
-      Thread.abort_on_exception = true
-      @server_thread = Thread.new { 
-        Rack::Handler::Thin.run( self, **options=opts ) do |server|
-          if @ssl_config
-            server.ssl = true
-            server.ssl_options = @ssl_config
-          end
+      Rack::Handler::Thin.run( self, **opts ) do |server|
+        if @ssl_config
+          server.ssl = true
+          server.ssl_options = @ssl_config
         end
-      }
-      @log.debug 'Web server has started.'
+      end
+    rescue => e
+      if e.message.start_with?( NO_ACCEPTOR )
+        @engine.err "Could not start the web server on #{@config.host}:#{@config.port}: " \
+          'the port is in use or needs root privileges.'
+      else
+        @engine.handle_exception e
+      end
+      @engine.stop_running_app
     end
 
     # 
@@ -74,7 +92,8 @@ module WebSvr
     def stop
       @log.debug 'Stopping the web server…'
 
-      @server_thread.kill
+      # When the server thread itself failed, it is ending already.
+      @server_thread.kill unless Thread.current == @server_thread
 
       @log.debug 'The web server has been stopped.'
     end
@@ -92,9 +111,31 @@ module WebSvr
       request.log
 
       response = request.process
-      response.log if response
 
-      return response ? response.result : nil
+      # A page that failed to render gives no response.
+      response ||= @handler.server_error_result
+      response.log
+
+      return response.result
+    rescue => e
+      # A bug in gloo-web's own code. Errors in gloo statements are
+      # handled where they happen, so this is the unexpected case:
+      # report it and send the error page.
+      @engine.handle_exception e
+      return error_result
+    end
+
+    # 
+    # The result for a request that failed: the app's error page, or a
+    # plain 500 if that fails too.
+    # 
+    def error_result
+      return @handler.server_error_result.result
+    rescue => e
+      @engine.handle_exception e
+      return [ WebSvr::ResponseCode::SERVER_ERR,
+        { WebSvr::Response::CONTENT_TYPE => WebSvr::Response::TEXT_TYPE },
+        WebSvr::Handler::SERVER_ERR_MSG ]
     end
 
   
