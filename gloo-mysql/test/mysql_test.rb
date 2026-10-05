@@ -36,16 +36,38 @@ end
 
 class FakeMysql2Client
 
-  def initialize( fields, rows )
+  attr_reader :closed
+
+  #
+  # Set up with the result to return, or an error to raise on query.
+  #
+  def initialize( fields, rows, error = nil )
     @result_set = FakeMysql2ResultSet.new( fields, rows )
+    @error = error
+    @closed = false
   end
 
+  #
+  # The connection is alive.
+  #
   def ping
     return true
   end
 
+  #
+  # Run a query: return the result, or raise the error.
+  #
   def query( _sql, **_opts )
+    raise @error if @error
+
     return @result_set
+  end
+
+  #
+  # Close the connection.
+  #
+  def close
+    @closed = true
   end
 
   def prepare( _sql )
@@ -120,12 +142,12 @@ class MysqlTest < BaseEngineTest
   #
   def test_verify_returns_false_and_records_the_error_on_a_connection_failure
     o = create_mysql
-    Mysql2::Client.stub( :new, ->( *_args ) { raise StandardError, 'simulated connection failure' } ) do
+    Mysql2::Client.stub( :new, ->( *_args ) { raise Mysql2::Error, 'simulated connection failure' } ) do
       o.msg_verify
     end
 
     assert_equal false, @engine.heap.it.value
-    assert @engine.error?
+    assert_equal "Could not connect to mysql 'o': simulated connection failure", @engine.heap.error.value
   end
 
   def test_verify_returns_true_when_the_client_connects
@@ -162,13 +184,8 @@ class MysqlTest < BaseEngineTest
   end
 
   #
-  # query's own rescue only guards the query-execution step -
-  # get_client (and Mysql2::Client.new inside it) runs before the
-  # begin block, so a connection failure propagates as a raised
-  # exception rather than being swallowed into an empty result. Same
-  # shape in gloo-sqlite's Sqlite#query - not a bug, just the actual
-  # contract: Query#run_query (gloo-db), the caller, has its own
-  # outer rescue for exactly this.
+  # A connection failure comes out of query as an exception, for
+  # gloo-db's Query to report (the shared driver rule).
   #
   def test_query_raises_when_the_connection_itself_fails
     o = create_mysql
@@ -186,6 +203,69 @@ class MysqlTest < BaseEngineTest
 
     assert_kind_of QueryResult, result
     assert result.has_data_to_show?
+  end
+
+  #
+  # verify closes the connection it opened.
+  #
+  def test_verify_closes_the_connection
+    o = create_mysql
+    client = FakeMysql2Client.new( [], [] )
+    Mysql2::Client.stub( :new, ->( *_args ) { client } ) { o.msg_verify }
+    assert client.closed
+  end
+
+  #
+  # A database error comes out of query, rather than an empty result.
+  #
+  def test_query_with_a_database_error_raises_it
+    o = create_mysql
+    client = FakeMysql2Client.new( [], [], Mysql2::Error.new( 'no such table' ) )
+    Mysql2::Client.stub( :new, ->( *_args ) { client } ) do
+      assert_raises( Mysql2::Error ) { o.query( 'SELECT * FROM nope' ) }
+    end
+  end
+
+  #
+  # Mysql2 errors are the driver's database errors.
+  #
+  def test_database_errors
+    assert_equal [ Mysql2::Error ], create_mysql.database_errors
+  end
+
+  #
+  # Set up a query object (q) on the mysql connection (o).
+  #
+  def build_query( sql )
+    create_mysql
+    @engine.parser.run 'create q as query'
+    @engine.parser.run "put 'o' into q.database*"
+    @engine.parser.run "put '#{sql}' into q.sql"
+  end
+
+  #
+  # Through gloo-db's query: a database error is one readable error,
+  # and it is false.
+  #
+  def test_query_run_with_a_database_error_is_a_readable_error
+    build_query( 'SELECT * FROM nope' )
+    client = FakeMysql2Client.new( [], [], Mysql2::Error.new( "Table 'x.nope' doesn't exist" ) )
+    Mysql2::Client.stub( :new, ->( *_args ) { client } ) { @engine.parser.run 'tell q to run' }
+
+    assert_equal "Query failed: Table 'x.nope' doesn't exist", @engine.heap.error.value
+    assert_equal false, @engine.heap.it.value
+  end
+
+  #
+  # Through gloo-db's query: a query that runs puts true in it.
+  #
+  def test_query_run_puts_true_in_it
+    build_query( 'SELECT id FROM t' )
+    client = FakeMysql2Client.new( [ 'id' ], [ [ 1 ] ] )
+    Mysql2::Client.stub( :new, ->( *_args ) { client } ) { @engine.parser.run 'tell q to run' }
+
+    assert_equal true, @engine.heap.it.value
+    refute @engine.error?
   end
 
 end

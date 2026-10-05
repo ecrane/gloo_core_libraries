@@ -17,8 +17,12 @@
 #   flags    = opts[:flags] || 0
 #
 require 'mysql2'
+require 'db_connection'
 
 class Mysql < Gloo::Core::Obj
+
+  # Shared driver behaviour from gloo-db: errors, verify, setup problems.
+  include DbConnection
 
   KEYWORD = 'mysql'.freeze
   KEYWORD_SHORT = 'mysql'.freeze
@@ -80,12 +84,22 @@ class Mysql < Gloo::Core::Obj
   end
 
   #
-  # SSH to the host and execute the command, then update result.
+  # Verify that the database connection can be established.
+  # It is true if it can, false if not (with the reason in the error).
   #
   def msg_verify
-    return unless connects?
+    verify_connection do
+      client = Mysql2::Client.new( connection_params )
+      client.close
+    end
+  end
 
-    @engine.heap.it.set_to true
+  #
+  # The exception classes that are database errors (DbConnection):
+  # Query reports these as 'Query failed: …'.
+  #
+  def database_errors
+    return [ Mysql2::Error ]
   end
 
 
@@ -112,13 +126,7 @@ class Mysql < Gloo::Core::Obj
       @engine.log.debug "Opening a new Connection."
     end
 
-    h = {
-      host: host_value,
-      database: db_value,
-      username: user_value,
-      password: passwd_value
-    }
-    client = Mysql2::Client.new( h )
+    client = Mysql2::Client.new( connection_params )
 
     app.cache_db_client( self, client ) if app
     
@@ -134,32 +142,29 @@ class Mysql < Gloo::Core::Obj
 
     heads = []
     data = []
-    begin
-      if params
-        pst = client.prepare( sql )
-        rs = pst.execute( *params, :as => :array )
-        if rs
-          rs.each do |row|
-            arr = []
-            row.each do |o| 
-              arr << o
-            end
-            data << arr
+    # Database errors come out as exceptions, for Query to report.
+    if params
+      pst = client.prepare( sql )
+      rs = pst.execute( *params, :as => :array )
+      if rs
+        rs.each do |row|
+          arr = []
+          row.each do |o| 
+            arr << o
           end
-        end
-      else
-        rs = client.query( sql, :as => :array ) 
-        if rs
-          rs.each do |row|
-            data << row
-          end
+          data << arr
         end
       end
-
-      heads = rs.fields if rs
-    rescue => e
-      @engine.log_exception e
+    else
+      rs = client.query( sql, :as => :array ) 
+      if rs
+        rs.each do |row|
+          data << row
+        end
+      end
     end
+
+    heads = rs.fields if rs
 
     return [ heads, data ]
   end
@@ -227,24 +232,15 @@ class Mysql < Gloo::Core::Obj
   end
 
   #
-  # Try the connection and make sure it works.
-  # Returns true if we can establish a connection.
+  # The settings for a connection, from the children.
   #
-  def connects?
-    begin
-      h = {
-        host: host_value,
-        database: db_value,
-        username: user_value,
-        password: passwd_value
-      }
-      Mysql2::Client.new( h )
-    rescue => e
-      @engine.log_exception e
-      @engine.heap.it.set_to false
-      return false
-    end
-    return true
+  def connection_params
+    return {
+      host: host_value,
+      database: db_value,
+      username: user_value,
+      password: passwd_value
+    }
   end
 
   # ---------------------------------------------------------------------
@@ -266,7 +262,7 @@ class Mysql < Gloo::Core::Obj
         "password (string) — The user's password."
       ],
       :messages => [
-        'verify — Verify that the database connection can be established.'
+        'verify — Verify that the database connection can be established. It is true if it can, false if not (with the reason in the error).'
       ],
       :examples => <<~EXAMPLES.strip
         mysql [can] :
