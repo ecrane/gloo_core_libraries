@@ -1,3 +1,7 @@
+1.6 - 2026.10.05
+ - Update for gloo v7.0, better error handling and results in in.
+
+
 1.5 - 2026.09.02
  - query now returns [ columns, rows ] like gloo-mysql and gloo-pg,
    so [tbl] objects backed by a sqlite query render, and single-row
