@@ -27,11 +27,39 @@ tests [can] :
           assert "email msg object should exist"
 
       #
-      # 'send' and 'fetch' are deliberately not exercised anywhere in
-      # this suite - they open real SMTP/IMAP connections. These
-      # tests only cover structure that's safe to check without a
-      # server: messages exist, default children exist.
+      # A successful 'send' or 'fetch' needs a real SMTP/IMAP server, so
+      # it isn't exercised here (the Ruby tests fake the servers). These
+      # tests cover structure and the send errors found before any
+      # connection is made.
       #
+
+      send_without_a_message [test] :
+        description [string] : email_smtp send with no message is an error; it is false
+        expect_errors [bool] : true
+        on_test [script] :
+          create tests.gloo-email.lib_obj_verbs.smtp3 as email_smtp
+
+          tell tests.gloo-email.lib_obj_verbs.smtp3 to send
+          refute "expected it to be false with no message to send"
+
+      send_to_nothing [test] :
+        description [string] : email send with an email_smtp that doesn't exist is an error; it is false
+        expect_errors [bool] : true
+        on_test [script] :
+          create tests.gloo-email.lib_obj_verbs.msg3 as email
+
+          tell tests.gloo-email.lib_obj_verbs.msg3 to send (tests.gloo-email.lib_obj_verbs.no_smtp)
+          refute "expected it to be false when the email_smtp doesn't exist"
+
+      send_with_something_else [test] :
+        description [string] : email_smtp send with something that isn't an email is an error; it is false
+        expect_errors [bool] : true
+        on_test [script] :
+          create tests.gloo-email.lib_obj_verbs.smtp4 as email_smtp
+          create tests.gloo-email.lib_obj_verbs.not_email as string
+
+          tell tests.gloo-email.lib_obj_verbs.smtp4 to send (tests.gloo-email.lib_obj_verbs.not_email)
+          refute "expected it to be false when the message isn't an email"
 
       email_smtp_messages [test] :
         description [string] : email_smtp responds to send and unload

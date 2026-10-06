@@ -4,8 +4,11 @@
 require 'config'
 require 'msg'
 require 'smtp'
+require 'email_param'
 
 class EmailSmtp < Gloo::Core::Obj
+
+  include EmailParam
 
   KEYWORD = 'email_smtp'.freeze
   SERVER = 'server'.freeze
@@ -90,23 +93,13 @@ class EmailSmtp < Gloo::Core::Obj
   end
 
   #
-  # Send an email.
+  # Send the email message given as the parameter.
+  # It is true if it was sent, false otherwise.
   #
   def msg_send
-    if @params&.token_count&.positive?
-      msg_pn = Gloo::Core::Pn.new( @engine, @params.tokens.first )
-      unless msg_pn&.exists?
-        @engine.err 'Email Message does not exist'
-        return
-      end
-    else
-      @engine.err 'Email Message is required'
-      return
-    end
-    msg = msg_pn.resolve.get_msg
-
-    smtp = Smtp.new( @engine, get_config )
-    smtp.send msg
+    email = param_obj( EmailMsg, 'email message',
+      "tell #{name} to send (my.email)" )
+    send_msg( email&.get_msg, email && get_config )
   end
 
   #
@@ -137,7 +130,7 @@ class EmailSmtp < Gloo::Core::Obj
         "password (string) — The user's password."
       ],
       :messages => [
-        'send ({message.path}) — Send the given email message object using this SMTP configuration. A parameter is required: the path to an email message object.'
+        'send ({message.path}) — Send the given email message object using this SMTP configuration. A parameter is required: the path to an email message object. It is true if the message was sent, false otherwise (eg. a refused login or an unreachable server, reported as an error).'
       ],
       :notes => 'No vault documentation exists for this object type — ' \
         'this was authored directly from the code.',

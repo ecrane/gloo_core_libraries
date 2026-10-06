@@ -24,6 +24,7 @@ Gem::Specification.new do |spec|
     "lib/email_smtp.rb",
     "lib/email_imap.rb",
     "lib/email_msg.rb",
+    "lib/email_param.rb",
     "lib/gloo-email.rb",
     "lib/msg.rb",
     "lib/config.rb",
@@ -33,13 +34,18 @@ Gem::Specification.new do |spec|
   spec.require_paths = ['lib']
 
   #
-  # Used for building/sending mail (Msg#get_mail, Smtp#send) and IMAP
+  # Used for building/sending mail (Msg#get_mail, Smtp#deliver) and IMAP
   # message parsing (EmailImap#process_message). Was never declared
   # here even though lib/ already requires it directly - only worked
   # because it happened to be installed as a side effect of something
   # else.
   #
   spec.add_dependency 'mail'
+
+  #
+  # Uses gloo 7.0's error handling (syntax_err, NotFound)
+  #
+  spec.add_dependency 'gloo', '>= 7.0'
 
   #
   # Development Dependencies

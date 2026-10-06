@@ -18,17 +18,19 @@ class Smtp
   end
 
   # 
-  # Send an email message.
+  # Deliver an email message. Returns true if it was sent; otherwise
+  # reports a readable error (no backtrace: a refused login, an
+  # unreachable server or a bad address are expected) and returns
+  # false.
   # 
-  def send msg
-    begin
-      configure
-      mail = msg.get_mail
-      mail.deliver!
-      @engine.log.info "Email sent successfully!"
-    rescue => ex
-      @engine.log_exception ex
-    end
+  def deliver msg
+    configure
+    msg.get_mail.deliver!
+    @engine.log.info "Email sent successfully!"
+    return true
+  rescue => ex
+    @engine.err "Could not send email: #{ex.message}"
+    return false
   end
 
   # 

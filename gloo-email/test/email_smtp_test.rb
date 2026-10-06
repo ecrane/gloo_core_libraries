@@ -1,8 +1,8 @@
 # Author::    Eric Crane  (mailto:eric.crane@mac.com)
 # Copyright:: Copyright (c) 2026 Eric Crane.  All rights reserved.
 #
-# msg_send is deliberately not exercised - it calls Smtp#send, which
-# calls Mail::Message#deliver!, real network I/O to an SMTP server.
+# msg_send is covered in send_test.rb, which uses Mail's test
+# delivery instead of a real SMTP server.
 #
 require 'test_helper'
 

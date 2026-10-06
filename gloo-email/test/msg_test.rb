@@ -3,8 +3,8 @@
 #
 # Only covers construction and the in-memory Mail::Message it builds
 # (get_mail). Nothing here connects to a server or sends anything -
-# that's Smtp#send, deliberately not exercised (see smtp.rb - it
-# calls Mail::Message#deliver!, real network I/O).
+# that's Smtp#deliver, covered in send_test.rb with Mail's test
+# delivery.
 #
 require 'test_helper'
 

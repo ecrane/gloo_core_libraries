@@ -103,45 +103,70 @@ class EmailImap < Gloo::Core::Obj
   end
 
   #
-  # Fetch emails from the IMAP server.
+  # Fetch the unseen emails from the IMAP server into messages.
+  # It is true if it could fetch them (even if there were none),
+  # false otherwise.
   #
   def msg_fetch
-    # Connect to the email server
-    imap = Net::IMAP.new(server, port, true)
-    imap.login(username, password)
-    imap.select(mailbox)
-
-    # Search for messages matching filter
-    ids = imap.search([SEARCH])
-
-    if ids.empty?
-      puts "No new messages."
-    else
-      ids.each do |msg_id|
-        raw_message = imap.fetch( msg_id, "RFC822" )[0].attr["RFC822"]
-        mail = Mail.read_from_string( raw_message )
-        process_message( mail )
-      end
+    mails = fetch_unseen
+    if mails
+      @engine.log.info "No new messages." if mails.empty?
+      mails.each { |mail| process_message( mail ) }
     end
 
-    # -----------------------------
-    # CLEAN UP
-    # -----------------------------
+    @engine.heap.it.set_to( mails ? true : false )
+  end
+
+  #
+  # Get the unseen messages from the server, as Mail messages.
+  # If it can't (an unreachable server, a refused login, no such
+  # mailbox), report a readable error and return nil. The connection
+  # is always closed.
+  #
+  def fetch_unseen
+    imap = Net::IMAP.new( server, port, true )
+    imap.login( username, password )
+    imap.select( mailbox )
+
+    # Search for messages matching filter
+    ids = imap.search( [ SEARCH ] )
+
+    return ids.map do |msg_id|
+      raw_message = imap.fetch( msg_id, "RFC822" )[0].attr["RFC822"]
+      Mail.read_from_string( raw_message )
+    end
+  rescue => e
+    @engine.err "Could not fetch email from #{server}: #{e.message}"
+    return nil
+  ensure
+    close_imap( imap )
+  end
+
+  #
+  # Log out and disconnect, if connected.
+  #
+  def close_imap( imap )
+    return unless imap
+
     imap.logout
-    imap.disconnect  
+    imap.disconnect
+  rescue StandardError
+    # The connection already failed or was closed; nothing to do.
+    nil
   end
 
   #
   # Process a single email message
   #
   def process_message( mail )
-    from = mail.from.join(', ')
-    to = mail.to.join(', ')
+    # A message may have no From: or To: (eg. when we were Bcc'd).
+    from = Array( mail.from ).join(', ')
+    to = Array( mail.to ).join(', ')
     subject = mail.subject
     dt = mail.date
     body = mail.body.decoded
 
-    msg_can = find_child MESSAGES
+    msg_can = find_child( MESSAGES ) || @engine.factory.create_can( MESSAGES, self )
     
     msg = msg_can.find_add_child( msg_can.children.length.to_s, 'email' )
     o = msg.find_add_child( 'from', 'string' )
@@ -178,7 +203,7 @@ class EmailImap < Gloo::Core::Obj
         'messages (container) — Populated by fetch: one child per unseen message found, each an email object with from/to/subject/date/body.'
       ],
       :messages => [
-        'fetch — Connect to the IMAP server, select the mailbox, and fetch all unseen messages, adding each as a child of messages. Logs out and disconnects when done.'
+        'fetch — Connect to the IMAP server, select the mailbox, and fetch all unseen messages, adding each as a child of messages (created if missing). Logs out and disconnects when done. It is true if it could fetch (even if there were no new messages), false otherwise (eg. a refused login or an unreachable server, reported as an error).'
       ],
       :notes => 'No vault documentation exists for this object type — ' \
         'this was authored directly from the code.',
