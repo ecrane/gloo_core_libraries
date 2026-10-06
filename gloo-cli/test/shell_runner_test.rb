@@ -23,10 +23,6 @@ class FakeShellObj
     return false
   end
 
-  def run_on_error
-    return false
-  end
-
   def run_before_action
     @before_action_ran = true
   end
@@ -66,6 +62,23 @@ class ShellRunnerTest < BaseEngineTest
     assert r.instance_variable_get( :@test_action_ran )
     assert obj.before_action_ran
     assert obj.after_action_ran
+  end
+
+  #
+  # A Ruby exception in a command is handled (logged, on_exception),
+  # not raised out of the shell.
+  #
+  def test_an_exception_in_a_command_is_handled
+    r = ShellRunner.new( @engine, FakeShellObj.new, command: [ 'go' ] )
+    r.add_command_node( { name: 'go', description: '', method: 'cmd_test_action' } )
+    def r.cmd_test_action( _obj, _context )
+      raise 'boom'
+    end
+    reported = []
+    @engine.define_singleton_method( :handle_exception ) { |e| reported << e.message }
+
+    r.start
+    assert_equal [ 'boom' ], reported
   end
 
 end

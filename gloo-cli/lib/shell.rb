@@ -11,7 +11,6 @@ class Shell < Gloo::Core::Obj
   PROMPT = 'prompt'.freeze
   DEFAULT_ACTION = 'default_action'.freeze
   INCLUDE_QUIT = 'include_quit'.freeze
-  ON_ERROR = 'on_error'.freeze
   ON_UNKNOWN_CMD = 'on_unknown_command'.freeze
   ON_EMPTY_CMD = 'on_empty_command'.freeze
   BEFORE_ACTION = 'before_action'.freeze
@@ -156,18 +155,6 @@ class Shell < Gloo::Core::Obj
   end
 
   #
-  # Run the on_error script if one exists.
-  # Returns true if the script was found and run, false otherwise.
-  #
-  def run_on_error
-    o = find_child ON_ERROR
-    return false unless o
-
-    Gloo::Exec::Dispatch.message( @engine, 'run', o )
-    return true
-  end
-
-  #
   # Run the on_unknown_cmd script if one exists.
   # Returns true if the script was found and run, false otherwise.
   #
@@ -249,7 +236,7 @@ class Shell < Gloo::Core::Obj
         "prompt (string) — Default: '> '. The prompt shown at each turn of the REPL.",
         'default_action (script) — Run when the user presses RETURN with no input.',
         'include_quit (boolean) — Optional. If true, a built-in quit command is added automatically.',
-        'on_error (script) — Optional. Run when a command raises an error.',
+        'on_error (script) — Optional. An ordinary on_error event script: like any on_error, it runs when an error is reported anywhere, including in a command. (A Ruby exception in a command is logged and runs on_exception; the shell carries on.)',
         "on_unknown_command (script) — Optional. Run when the input doesn't match any known command; if absent, a default \"Unknown command\" message is shown instead.",
         'on_empty_command (script) — Optional. Run when the user submits an empty line.',
         'before_action (script) — Optional. Run before every command executes.',

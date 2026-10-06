@@ -139,4 +139,57 @@ class CommandTest < BaseEngineTest
     assert_equal 'sub', data[ :children ].first[ :name ]
   end
 
+  #
+  # Run a line of gloo.
+  #
+  def run_cmd( cmd )
+    @engine.parser.parse_immediate( cmd ).run
+  end
+
+  #
+  # Registering with a shell adds the command to it.
+  #
+  def test_register_adds_the_command_to_the_shell
+    create_command
+    run_cmd 'create sh as shell'
+    shell = @engine.heap.root.find_child( 'sh' )
+    added = []
+    shell.define_singleton_method( :add_command ) { |obj, data| added << data[ :name ] }
+
+    run_cmd 'tell c to register (sh)'
+    assert_equal [ 'c' ], added
+    refute @engine.error?
+  end
+
+  #
+  # Without a shell, it is a syntax error.
+  #
+  def test_register_without_a_shell
+    create_command
+    run_cmd 'tell c to register'
+
+    assert_equal 'Missing the shell to register with! eg. tell c to register (my.shell)',
+      @engine.heap.error.value
+    assert_equal Gloo::Core::Error::SYNTAX, @engine.heap.error.kind
+  end
+
+  #
+  # A shell that doesn't exist is not found.
+  #
+  def test_register_with_a_shell_that_does_not_exist
+    create_command
+    run_cmd 'tell c to register (nope)'
+    assert_equal Gloo::Core::NotFound.object( 'nope' ), @engine.heap.error.value
+  end
+
+  #
+  # Something that isn't a shell is an error.
+  #
+  def test_register_with_something_else
+    create_command
+    run_cmd 'create s as string'
+    run_cmd 'tell c to register (s)'
+    assert_equal "'s' is not a shell.", @engine.heap.error.value
+  end
+
 end

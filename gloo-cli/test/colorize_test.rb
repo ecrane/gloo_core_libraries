@@ -33,4 +33,35 @@ class ColorizeTest < BaseEngineTest
     assert o.add_children_on_create?
   end
 
+  #
+  # Run a line of gloo.
+  #
+  def run_cmd( cmd )
+    @engine.parser.parse_immediate( cmd ).run
+  end
+
+  #
+  # A known color colors its text; the line is in it.
+  #
+  def test_run_colors_known_colors
+    run_cmd 'create c as colorize'
+    run_cmd "put 'hi' into c.white"
+
+    warnings = capture_warnings { capture_io { run_cmd 'tell c to run' } }
+    assert_empty warnings
+    assert_equal ColorizedString[ 'hi' ].colorize( :white ), @engine.heap.it.value
+  end
+
+  #
+  # An unknown color is a warning, and its text is shown uncolored.
+  #
+  def test_run_warns_on_an_unknown_color
+    run_cmd 'create c as colorize'
+    run_cmd 'create c.bogus as string : plain'
+
+    warnings = capture_warnings { capture_io { run_cmd 'tell c to run' } }
+    assert_equal [ "Unknown color 'bogus' in colorize 'c'; shown uncolored." ], warnings
+    assert @engine.heap.it.value.end_with?( 'plain' )
+  end
+
 end

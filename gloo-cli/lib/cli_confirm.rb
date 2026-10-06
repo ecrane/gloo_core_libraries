@@ -27,24 +27,21 @@ class CliConfirm < Gloo::Core::Obj
   end
 
   #
-  # Get the URI from the child object.
-  # Returns nil if there is none.
+  # Get the prompt from the child object.
+  # The default prompt if there is none.
   #
   def prompt_value
     o = find_child PROMPT
-    return nil unless o
-
-    return o.value
+    return o ? o.value : DEFAULT_PROMPT
   end
 
   #
-  # Set the result of the system call.
+  # Set the result to the answer, and put it in it.
+  # The answer is kept even if there is no result child.
   #
   def set_result( data )
-    r = find_child RESULT
-    return nil unless r
-
-    r.set_value data
+    find_child( RESULT )&.set_value data
+    @engine.heap.it.set_to data
   end
 
   # ---------------------------------------------------------------------
@@ -83,8 +80,6 @@ class CliConfirm < Gloo::Core::Obj
   #
   def msg_run
     prompt = prompt_value
-    return unless prompt
-
     result = @engine.platform.prompt.yes?( prompt )
     set_result result
   end
@@ -102,11 +97,11 @@ class CliConfirm < Gloo::Core::Obj
       :shortcut => KEYWORD_SHORT,
       :description => 'CLI confirmation prompt.',
       :children => [
-        "prompt (string) — Default: '> '. The confirmation prompt.",
+        "prompt (string) — Default: '> '. The confirmation prompt; the default is used if there is no prompt child.",
         'result (boolean) — The result of the prompt.'
       ],
       :messages => [
-        'run — Prompt the user and then set the result.'
+        'run — Prompt the user; the answer (true or false) is put in result and in it.'
       ],
       :examples => <<~EXAMPLES.strip
         confirm [confirm] :

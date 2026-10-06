@@ -38,6 +38,12 @@ Gem::Specification.new do |spec|
   spec.require_paths = ['lib']
 
   #
+  # Uses gloo 7.0's error handling (syntax_err, NotFound, warn,
+  # handle_exception)
+  #
+  spec.add_dependency 'gloo', '>= 7.0'
+
+  #
   # Development Dependencies
   #
   spec.add_development_dependency 'bundler'

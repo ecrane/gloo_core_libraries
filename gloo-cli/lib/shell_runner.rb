@@ -109,11 +109,7 @@ class ShellRunner
       pn = Gloo::Core::Pn.new( @engine, parent_node.obj )
       command = pn.resolve
       if command
-        begin
-          command.run_action_with_context( cmd_node.name )
-        rescue => e
-          command.run_on_error || @obj.run_on_error
-        end
+        command.run_action_with_context( cmd_node.name )
       end
     end
   end
@@ -207,6 +203,16 @@ class ShellRunner
   # Used when a command is passed directly from the CLI.
   #
   def execute_once( tokens )
+    run_tokens( tokens )
+  end
+
+  #
+  # Find and run the command for the given tokens, with the before and
+  # after actions. An unexpected Ruby exception is handled (logged, and
+  # on_exception is run) and the shell carries on. Errors in a
+  # command's gloo script are reported where they happen (on_error).
+  #
+  def run_tokens( tokens )
     result = traverse( @root, tokens )
     if result[:node]
       @obj.run_before_action
@@ -215,6 +221,8 @@ class ShellRunner
     else
       handle_unknown_command
     end
+  rescue => e
+    @engine.handle_exception e
   end
 
   #
@@ -293,15 +301,7 @@ class ShellRunner
         next
       end
 
-      result = traverse( @root, tokens )
-
-      if result[:node]
-        @obj.run_before_action
-        execute_command( result[:node], tokens, result[:parent] )
-        @obj.run_after_action
-      else
-        handle_unknown_command
-      end
+      run_tokens( tokens )
     end
   end
 

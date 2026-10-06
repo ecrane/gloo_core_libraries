@@ -51,3 +51,12 @@ test [can] :
 
         eval test.select.s3.prompt = '>'
         assert "expected select's default prompt value to be '>'"
+
+    run_with_no_options [test] :
+      description [string] : select run with no options is an error; it is false
+      expect_errors [bool] : true
+      on_test [script] :
+        create test.select.s4 as sel
+
+        tell test.select.s4 to run
+        refute "expected it to be false when there are no options"

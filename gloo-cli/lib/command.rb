@@ -17,7 +17,6 @@ class Command < Gloo::Core::Obj
   CONTEXT = 'context'.freeze
   OPTIONS = 'options'.freeze
   OPTIONS_KEY = 'options_key'.freeze
-  ON_ERROR = 'on_error'.freeze
 
   #
   # The name of the object type.
@@ -120,18 +119,6 @@ class Command < Gloo::Core::Obj
     Gloo::Exec::Dispatch.message( @engine, 'run', o )
   end
 
-  #
-  # Run the on_error script if one exists.
-  # Returns true if the script was found and run, false otherwise.
-  #
-  def run_on_error
-    o = find_child ON_ERROR
-    return false unless o
-
-    Gloo::Exec::Dispatch.message( @engine, 'run', o )
-    return true
-  end
-
 
   # ---------------------------------------------------------------------
   #    Children
@@ -171,19 +158,43 @@ class Command < Gloo::Core::Obj
   end
 
   #
-  # Register the command with the shell.
+  # Register the command with the shell given as the parameter.
   #
   def msg_register
-    if @params&.token_count&.positive?
-      pn = Gloo::Core::Pn.new( @engine, @params.first )
-      shell = pn.resolve
-      shell.add_command( self, get_command_data )
+    shell = param_shell
+    return unless shell
 
-      # Are there options to add?
-      if options_key
-        shell.set_context( options_key, options )
-      end
+    shell.add_command( self, get_command_data )
+
+    # Are there options to add?
+    if options_key
+      shell.set_context( options_key, options )
     end
+  end
+
+  #
+  # The shell named by the message's parameter. Otherwise report it
+  # (a syntax error if there's no parameter) and return nil.
+  #
+  def param_shell
+    unless @params&.token_count&.positive?
+      @engine.syntax_err "Missing the shell to register with! eg. tell #{name} to register (my.shell)"
+      return nil
+    end
+
+    pn = @params.first
+    shell = Gloo::Core::Pn.new( @engine, pn ).resolve
+    if shell.nil?
+      @engine.err Gloo::Core::NotFound.object( pn )
+      return nil
+    end
+
+    unless shell.is_a?( Shell )
+      @engine.err "'#{pn}' is not a shell."
+      return nil
+    end
+
+    return shell
   end
 
 
@@ -257,7 +268,7 @@ class Command < Gloo::Core::Obj
         'options_key (string) — Optional. The shell context key that options gets registered under.'
       ],
       :messages => [
-        'register ({shell.path}) — Register this command with the given shell object, adding it to that shell\'s command tree. A parameter is required: the path to the shell.'
+        'register ({shell.path}) — Register this command with the given shell object, adding it to that shell\'s command tree. A parameter is required: the path to the shell. It is an error if it doesn\'t exist or isn\'t a shell.'
       ],
       :notes => 'No vault documentation exists for this object type — ' \
         'this was authored directly from the code.'

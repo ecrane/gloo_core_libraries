@@ -55,12 +55,19 @@ class CliColorize < Gloo::Core::Obj
   end
 
   #
-  # Run the colorize command.
+  # Run the colorize command: show the line and put it in it.
+  # A child whose name isn't a color is shown uncolored, with a warning.
   #
   def msg_run
     msg = ''
     children.each do |o|
-      msg += ColorizedString[ o.value_display ].colorize( o.name.to_sym )
+      color = o.name.to_sym
+      if ColorizedString.colors.include?( color )
+        msg += ColorizedString[ o.value_display ].colorize( color )
+      else
+        @engine.warn "Unknown color '#{o.name}' in colorize '#{name}'; shown uncolored."
+        msg += o.value_display.to_s
+      end
     end
     @engine.log.show msg
     @engine.heap.it.set_to msg.to_s
@@ -82,10 +89,10 @@ class CliColorize < Gloo::Core::Obj
         'strings, each one can have a different color as specified by ' \
         'the names of the children.',
       :children => [
-        '[color] (string) — The name of the child or children is the color. The string\'s value is what will be written out.'
+        '[color] (string) — The name of the child or children is the color. The string\'s value is what will be written out. A name that isn\'t a color is written uncolored, with a warning.'
       ],
       :messages => [
-        'run — Output the string in the color specified.'
+        'run — Output the string in the color specified, and put the line in it.'
       ],
       :examples => <<~EXAMPLES.strip
         color [can] :
