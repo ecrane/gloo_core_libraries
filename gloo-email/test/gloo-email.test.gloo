@@ -5,6 +5,8 @@ tests [can] :
   gloo-email [can] :
     lib_obj_verbs [can] :
 
+      err_msg [string] :
+
       on_load [script] :
         load lib email
 
@@ -60,6 +62,43 @@ tests [can] :
 
           tell tests.gloo-email.lib_obj_verbs.smtp4 to send (tests.gloo-email.lib_obj_verbs.not_email)
           refute "expected it to be false when the message isn't an email"
+
+      send_without_a_message_error [test] :
+        description [string] : email_smtp send with no message reports a missing message
+        expect_errors [bool] : true
+        on_test [script] :
+          create tests.gloo-email.lib_obj_verbs.smtp5 as email_smtp
+
+          tell tests.gloo-email.lib_obj_verbs.smtp5 to send
+          put error into tests.gloo-email.lib_obj_verbs.err_msg
+
+          eval tests.gloo-email.lib_obj_verbs.err_msg = "Missing the email message! eg. tell smtp5 to send (my.email)"
+          assert "expected the missing-message error"
+
+      send_to_nothing_error [test] :
+        description [string] : email send with an email_smtp that doesn't exist reports it not found
+        expect_errors [bool] : true
+        on_test [script] :
+          create tests.gloo-email.lib_obj_verbs.msg4 as email
+
+          tell tests.gloo-email.lib_obj_verbs.msg4 to send (tests.gloo-email.lib_obj_verbs.no_smtp)
+          put error into tests.gloo-email.lib_obj_verbs.err_msg
+
+          eval tests.gloo-email.lib_obj_verbs.err_msg = "Object 'tests.gloo-email.lib_obj_verbs.no_smtp' was not found."
+          assert "expected the not-found error"
+
+      send_with_something_else_error [test] :
+        description [string] : email_smtp send with something that isn't an email reports it
+        expect_errors [bool] : true
+        on_test [script] :
+          create tests.gloo-email.lib_obj_verbs.smtp6 as email_smtp
+          create tests.gloo-email.lib_obj_verbs.not_email2 as string
+
+          tell tests.gloo-email.lib_obj_verbs.smtp6 to send (tests.gloo-email.lib_obj_verbs.not_email2)
+          put error into tests.gloo-email.lib_obj_verbs.err_msg
+
+          eval tests.gloo-email.lib_obj_verbs.err_msg = "'tests.gloo-email.lib_obj_verbs.not_email2' is not an email message."
+          assert "expected the not-an-email error"
 
       email_smtp_messages [test] :
         description [string] : email_smtp responds to send and unload

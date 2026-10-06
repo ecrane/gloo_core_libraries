@@ -60,3 +60,17 @@ test [can] :
 
         tell test.select.s4 to run
         refute "expected it to be false when there are no options"
+
+    err_msg [string] :
+
+    run_with_no_options_error [test] :
+      description [string] : select run with no options reports it
+      expect_errors [bool] : true
+      on_test [script] :
+        create test.select.s5 as sel
+
+        tell test.select.s5 to run
+        put error into test.select.err_msg
+
+        eval test.select.err_msg = "select 's5' has no options."
+        assert "expected the no-options error"

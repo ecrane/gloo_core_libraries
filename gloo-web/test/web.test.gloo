@@ -6,6 +6,7 @@ tests [can] :
   web [can] :
 
     rendered [string] :
+    err_msg [string] :
 
     on_load [script] :
       load lib web
@@ -101,6 +102,30 @@ tests [can] :
 
         tell tests.web.part3 to render
         refute "expected it to be false when the partial can't render"
+
+    page_render_outside_web_app_error [test] :
+      description [string] : A page rendered outside a running web app reports why
+      expect_errors [bool] : true
+      on_test [script] :
+        create tests.web.p4 as page
+
+        tell tests.web.p4 to render
+        put error into tests.web.err_msg
+
+        eval tests.web.err_msg = "page 'p4' can only render inside a web app (gloo-web)."
+        assert "expected the outside-a-web-app error"
+
+    partial_render_outside_web_app_error [test] :
+      description [string] : A partial rendered outside a running web app reports why
+      expect_errors [bool] : true
+      on_test [script] :
+        create tests.web.part4 as partial
+
+        tell tests.web.part4 to render
+        put error into tests.web.err_msg
+
+        eval tests.web.err_msg = "partial 'part4' can only render inside a web app (gloo-web)."
+        assert "expected the outside-a-web-app error"
 
     page_default_children [test] :
       description [string] : page default children include head and body elements

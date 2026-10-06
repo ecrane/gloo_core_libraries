@@ -48,3 +48,29 @@ test [can] :
 
         exists? instance test.command.cmd3.action
         assert "expected command to have an action child"
+
+    err_msg [string] :
+
+    register_without_a_shell [test] :
+      description [string] : command register with no shell is an error
+      expect_errors [bool] : true
+      on_test [script] :
+        create test.command.cmd4 as command
+
+        tell test.command.cmd4 to register
+        put error into test.command.err_msg
+
+        check test.command.err_msg for starts_with? ( "Missing the shell to register with!" )
+        assert "expected a missing-shell error"
+
+    register_with_something_else [test] :
+      description [string] : command register with something that isn't a shell is an error
+      expect_errors [bool] : true
+      on_test [script] :
+        create test.command.cmd5 as command
+
+        tell test.command.cmd5 to register (test.command.err_msg)
+        put error into test.command.err_msg
+
+        eval test.command.err_msg = "'test.command.err_msg' is not a shell."
+        assert "expected a not-a-shell error"
