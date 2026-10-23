@@ -147,6 +147,68 @@ class ResultsTest < BaseEngineTest
     assert_includes summary, '(outside tests: 1 error)'
   end
 
+  # -------------------------------------------------------------------
+  #   passed?: the run as a whole, for the exit status
+  # -------------------------------------------------------------------
+
+  def test_passed_when_every_test_passed_and_nothing_was_logged
+    @engine.log.reset_counts
+    results = Results.new( @engine )
+    results.add_result( build_result( passed: true ) )
+
+    assert results.passed?
+  end
+
+  def test_not_passed_when_a_test_failed
+    @engine.log.reset_counts
+    results = Results.new( @engine )
+    results.add_result( build_result( passed: true ) )
+    results.add_result( build_result( passed: false ) )
+
+    refute results.passed?
+  end
+
+  def test_not_passed_when_a_passing_test_logged_an_unexpected_error
+    @engine.log.reset_counts
+    log_counts( errors: 1 )
+    results = Results.new( @engine )
+    results.add_result( build_logged_result( errors: 1 ) )
+
+    refute results.passed?
+  end
+
+  def test_not_passed_when_a_passing_test_logged_an_unexpected_warning
+    @engine.log.reset_counts
+    log_counts( warnings: 1 )
+    results = Results.new( @engine )
+    results.add_result( build_logged_result( warnings: 1 ) )
+
+    refute results.passed?
+  end
+
+  def test_passed_when_the_logged_errors_were_expected
+    @engine.log.reset_counts
+    log_counts( errors: 2 )
+    results = Results.new( @engine )
+    results.add_result( build_logged_result( errors: 2, expect_errors: true ) )
+
+    assert results.passed?
+  end
+
+  def test_not_passed_when_errors_were_logged_outside_tests
+    @engine.log.reset_counts
+    log_counts( errors: 1 )
+    results = Results.new( @engine )
+    results.add_result( build_logged_result )
+
+    refute results.passed?
+  end
+
+  def test_passed_with_no_tests_and_nothing_logged
+    @engine.log.reset_counts
+    assert Results.new( @engine ).passed?
+  end
+
   #
   # Counts read naturally: singular, plural, and zero parts left out.
   #

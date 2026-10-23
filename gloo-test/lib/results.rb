@@ -73,6 +73,17 @@ class Results
   # ---------------------------------------------------------------------
 
   #
+  # Did the run as a whole pass? True when no test failed and nothing
+  # was logged that a test didn't expect (what the logged summary
+  # reports). gloo uses this for its exit status.
+  #
+  def passed?
+    return false if @fail_count.positive?
+
+    return get_logged_summary.nil?
+  end
+
+  #
   # Show the results.
   #
   def show_results

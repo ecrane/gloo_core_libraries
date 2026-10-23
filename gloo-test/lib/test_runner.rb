@@ -18,6 +18,7 @@ class TestRunner
 
   #
   # Execute all tests and display results.
+  # Returns true if the run passed (see Results#passed?), false if not.
   #
   def run
     # Count only what's logged from here on, not loading gloo-test.
@@ -32,6 +33,7 @@ class TestRunner
     @results.show_failures
     @results.show_results
     @engine.log.debug "TestRunner is finished"
+    return @results.passed?
   end
 
   # 

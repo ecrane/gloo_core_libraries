@@ -10,6 +10,8 @@ Loaded automatically when running gloo in test mode:
 > gloo --test ./path/to/tests/
 ```
 
+The run reports whether it passed: no test failed, and nothing was logged that no test expected. gloo uses that for its exit status (0 or 1), so scripts and CI can tell a failing run. See Testing in the gloo docs for how to write tests.
+
 It can also be loaded explicitly in a script, like any other core library:
 
 ```gloo
