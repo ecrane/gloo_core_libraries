@@ -1,3 +1,7 @@
+1.7 - 2026.11.04
+ - Starting a gloo-web server from a plain script run is now an error.
+
+
 1.6 - 2026.10.05
  - Update for gloo v7.0, better error handling and results in in.
 
