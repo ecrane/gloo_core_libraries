@@ -16,6 +16,8 @@ class Shell < Gloo::Core::Obj
   BEFORE_ACTION = 'before_action'.freeze
   AFTER_ACTION = 'after_action'.freeze
   WITH_COMMAND = 'with_command'.freeze
+  NOT_IN_SCRIPT_MODE_ERR = "Could not start the shell: an app runs in App mode. Run it with 'gloo --app %s'.".freeze
+  UNKNOWN_APP_FOLDER = '<folder>'.freeze
 
   #
   # The name of the object type.
@@ -122,12 +124,33 @@ class Shell < Gloo::Core::Obj
   # that one command and return. Otherwise, enter the interactive REPL.
   #
   def msg_start
+    return script_mode_err if @engine.mode == Gloo::App::Mode::SCRIPT
+
     runner = get_runner
 
     # add_test_commands
     add_quit_command
 
     runner.start
+  end
+
+  #
+  # A shell is an app, and an app runs in App mode. Started from a
+  # script run (gloo folder/start.gloo) it's a mistake: report it,
+  # with the command that runs the app, instead of starting.
+  #
+  def script_mode_err
+    @engine.err format( NOT_IN_SCRIPT_MODE_ERR, app_folder )
+  end
+
+  #
+  # The folder of the file gloo was run with (in Script mode, the
+  # first file loaded): the folder to give --app. A placeholder if
+  # nothing came from a file.
+  #
+  def app_folder
+    pn = @engine.persist_man.maps.first&.pn
+    return pn ? File.dirname( pn ) : UNKNOWN_APP_FOLDER
   end
 
   #
@@ -247,7 +270,9 @@ class Shell < Gloo::Core::Obj
           'one-shot run from an interactive session.'
       ],
       :messages => [
-        'start — Start the shell. If the app was invoked with extra command-line arguments, execute that one command and return; otherwise enter the interactive REPL.',
+        'start — Start the shell. If the app was invoked with extra command-line arguments, execute that one command and return; otherwise enter the interactive REPL. ' \
+          'A shell is an app and runs in App mode (gloo --app {folder}): started from a script run (gloo {folder}/start.gloo) it does not start, and reports ' \
+          "Could not start the shell: an app runs in App mode. Run it with 'gloo --app {folder}'.",
         'stop — Stop a running shell.'
       ],
       :notes => 'No vault documentation exists for this object type — ' \

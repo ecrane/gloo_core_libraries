@@ -107,4 +107,53 @@ class ShellTest < BaseEngineTest
     end
   end
 
+  # ---------------------------------------------------------------------
+  #    A shell is an app: it doesn't start in Script mode
+  # ---------------------------------------------------------------------
+
+  def test_start_in_script_mode_is_an_error_naming_the_app_folder
+    Dir.mktmpdir do |dir|
+      dir = File.realpath( dir )
+      File.write( File.join( dir, 'start.gloo' ), "start [can] :\n" )
+      @engine.persist_man.load( File.join( dir, 'start.gloo' ) )
+      sh = create_shell
+      script_mode
+
+      @engine.parser.run 'tell sh to start'
+      assert @engine.error?
+      assert_equal format( Shell::NOT_IN_SCRIPT_MODE_ERR, dir ), @engine.heap.error.value
+      assert_nil sh.instance_variable_get( :@runner ), 'expected the shell not to start'
+    end
+  end
+
+  def test_start_in_script_mode_with_no_file_uses_a_placeholder_folder
+    create_shell
+    script_mode
+
+    @engine.parser.run 'tell sh to start'
+    assert_equal format( Shell::NOT_IN_SCRIPT_MODE_ERR, '<folder>' ), @engine.heap.error.value
+    refute @engine.heap.it.value
+  end
+
+  def test_start_outside_script_mode_starts_the_runner
+    sh = create_shell
+    started = []
+    runner = Object.new
+    runner.define_singleton_method( :start ) { started << true }
+    sh.define_singleton_method( :get_runner ) { runner }
+
+    @engine.parser.run 'tell sh to start'
+    refute @engine.error?
+    assert_equal [ true ], started
+  end
+
+  private
+
+  #
+  # Make the engine report that it's running in Script mode.
+  #
+  def script_mode
+    @engine.define_singleton_method( :mode ) { Gloo::App::Mode::SCRIPT }
+  end
+
 end
