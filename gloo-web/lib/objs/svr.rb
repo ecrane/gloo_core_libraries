@@ -69,6 +69,8 @@ module Objs
 
     # Messages
     SERVER_NOT_RUNNING = 'The web server is not running!'.freeze
+    NOT_IN_SCRIPT_MODE_ERR = "Could not start the web server: an app runs in App mode. Run it with 'gloo --app %s'.".freeze
+    UNKNOWN_APP_FOLDER = '<folder>'.freeze
     SERVER_ALREADY_RUNNING = 'The web server is already running!'.freeze
 
     # 
@@ -418,6 +420,8 @@ module Objs
     # Start the gloo web server.
     #
     def msg_start
+      return script_mode_err if @engine.mode == Gloo::App::Mode::SCRIPT
+
       if @engine.app_running?
         @engine.err SERVER_ALREADY_RUNNING
         return
@@ -429,6 +433,26 @@ module Objs
       # Set running app to this object.
       @engine.start_running_app( self )
       # The running app will call the start function (below)
+    end
+
+    #
+    # A web server is an app, and an app runs in App mode. Started from
+    # a script run (gloo folder/start.gloo) it would stop as soon as the
+    # script finished: report the mistake, with the command that runs
+    # the app, instead of starting.
+    #
+    def script_mode_err
+      @engine.err format( NOT_IN_SCRIPT_MODE_ERR, app_folder )
+    end
+
+    #
+    # The folder of the file gloo was run with (in Script mode, the
+    # first file loaded): the folder to give --app. A placeholder if
+    # nothing came from a file.
+    #
+    def app_folder
+      pn = @engine.persist_man.maps.first&.pn
+      return pn ? File.dirname( pn ) : UNKNOWN_APP_FOLDER
     end
 
     #
@@ -769,7 +793,9 @@ module Objs
           'response_data (container) — Optional. Data available for use in on_response (request_data is also available at this point): page, type, code, elapsed, db (all string, all optional, populated only if present).'
         ],
         :messages => [
-          'start — Start the web server. It is an error if a web server is already running. If it can\'t listen on its port (in use, or needs root privileges), that is reported as an error and the server stops.',
+          'start — Start the web server. It is an error if a web server is already running. If it can\'t listen on its port (in use, or needs root privileges), that is reported as an error and the server stops. ' \
+            'A web server is an app and runs in App mode (gloo --app {folder}): started from a script run (gloo {folder}/start.gloo) it does not start, and reports ' \
+            "Could not start the web server: an app runs in App mode. Run it with 'gloo --app {folder}'.",
           'stop — Stop the web server. It is an error if it is not running.',
           'list_routes — Show the routing table. A debugging tool.',
           'list_assets — Show the list of assets. A debugging tool.',

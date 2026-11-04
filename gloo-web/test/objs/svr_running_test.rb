@@ -139,4 +139,53 @@ class SvrRunningTest < BaseEngineTest
     assert_same svr, @engine.running_app.obj
   end
 
+  # ---------------------------------------------------------------------
+  #    A web server is an app: it doesn't start in Script mode
+  # ---------------------------------------------------------------------
+
+  def test_start_in_script_mode_is_an_error_naming_the_app_folder
+    pn = nil
+    Dir.mktmpdir do |dir|
+      pn = File.join( File.realpath( dir ), 'start.gloo' )
+      File.write( pn, "start [can] :\n" )
+      @engine.persist_man.load( pn )
+    end
+    load_app_without_config
+    script_mode
+
+    run_cmd 'tell app.svr to start'
+    assert_equal format( Objs::Svr::NOT_IN_SCRIPT_MODE_ERR, File.dirname( pn ) ), @engine.heap.error.value
+    refute @engine.app_running?, 'expected the server not to start'
+  end
+
+  def test_start_in_script_mode_with_no_file_uses_a_placeholder_folder
+    load_app_without_config
+    @engine.persist_man.maps.clear
+    script_mode
+
+    run_cmd 'tell app.svr to start'
+    assert_equal format( Objs::Svr::NOT_IN_SCRIPT_MODE_ERR, '<folder>' ), @engine.heap.error.value
+    refute @engine.app_running?
+    refute @engine.heap.it.value
+  end
+
+  def test_start_outside_script_mode_starts_the_running_app
+    svr = load_app_without_config
+    started = []
+    @engine.define_singleton_method( :start_running_app ) { |obj| started << obj }
+
+    run_cmd 'tell app.svr to start'
+    refute @engine.error?
+    assert_equal [ svr ], started
+  end
+
+  private
+
+  #
+  # Make the engine report that it's running in Script mode.
+  #
+  def script_mode
+    @engine.define_singleton_method( :mode ) { Gloo::App::Mode::SCRIPT }
+  end
+
 end
