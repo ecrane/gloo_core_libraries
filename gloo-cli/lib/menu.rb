@@ -19,6 +19,7 @@ class Menu < Gloo::Core::Obj
   TITLE = 'title'.freeze
   TITLE_COLOR = 'green'.freeze
   QUIT_ITEM_NAME = 'q'.freeze
+  QUIT_HINT = "Use 'q' to quit this menu.".freeze
 
   @@menu_stack = []
 
@@ -227,19 +228,40 @@ class Menu < Gloo::Core::Obj
     run_default
     loop do
       begin_menu
-      if prompt_value.empty?
-        dt = DateTime.now
-        d = dt.strftime( '%Y.%m.%d' )
-        t = dt.strftime( '%I:%M:%S' )
-        theme = @engine.theme
-        cmd = @engine.platform.prompt.ask( "#{theme.accent( d )} #{theme.emphasis( t )} >" )
-      else
-        cmd = @engine.platform.prompt.ask( prompt_value )
-      end
-      cmd ? run_command( cmd ) : run_default
+      cmd = ask_command
+      next if cmd == :interrupted
+
+      # Ctrl-C stops the command and comes back to this menu.
+      @engine.run_interruptible { cmd ? run_command( cmd ) : run_default }
       break unless loop?
     end
     pop_menu self
+  end
+
+  #
+  # Show the prompt and read a command: nil at the end of input, or
+  # :interrupted if Ctrl-C dropped the line (with the hint, if nothing
+  # had been typed).
+  #
+  def ask_command
+    prompt = @engine.platform.prompt
+    return prompt.ask( prompt_text )
+  rescue Interrupt
+    @engine.interrupted_at_prompt( prompt.line_typed, QUIT_HINT )
+    return :interrupted
+  end
+
+  #
+  # The menu's prompt: its own, or the date and time.
+  #
+  def prompt_text
+    return prompt_value unless prompt_value.empty?
+
+    dt = DateTime.now
+    d = dt.strftime( '%Y.%m.%d' )
+    t = dt.strftime( '%I:%M:%S' )
+    theme = @engine.theme
+    return "#{theme.accent( d )} #{theme.emphasis( t )} >"
   end
 
   # ---------------------------------------------------------------------
@@ -403,7 +425,9 @@ class Menu < Gloo::Core::Obj
         'menu (not shown); q! — quit gloo entirely (not shown); ' \
         ': {command} — run a gloo command not part of the running app; ' \
         ': (alone) — quit the running app and drop into gloo, keeping ' \
-        'loaded app objects in the stack.',
+        'loaded app objects in the stack. Ctrl-C during an item stops ' \
+        'it and comes back to the menu; at an empty prompt it says how ' \
+        'to leave. See doc application, Stopping with Ctrl-C.',
       :examples => <<~EXAMPLES.strip
         simple [menu] :
           on_load [script] :

@@ -281,7 +281,10 @@ class Shell < Gloo::Core::Obj
         'sending it the register message with this shell\'s path, or ' \
         'by calling add_command directly. The underlying tree/REPL ' \
         'engine here was later ported into dev/gloo itself (as ' \
-        'Gloo::Shell::Runner) to power the interactive help shell.'
+        'Gloo::Shell::Runner) to power the interactive help shell. ' \
+        'Ctrl-C during a command stops it and comes back to the ' \
+        'shell\'s prompt; at an empty prompt it says how to leave ' \
+        '(with include_quit). See doc application, Stopping with Ctrl-C.'
     }
   end
 

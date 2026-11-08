@@ -39,9 +39,10 @@ Gem::Specification.new do |spec|
 
   #
   # Uses gloo 7.0's error handling (syntax_err, NotFound, warn,
-  # handle_exception)
+  # handle_exception), and 7.3's Ctrl-C handling (run_interruptible,
+  # interrupted_at_prompt, Prompt#line_typed)
   #
-  spec.add_dependency 'gloo', '>= 7.0'
+  spec.add_dependency 'gloo', '>= 7.3'
 
   #
   # Development Dependencies

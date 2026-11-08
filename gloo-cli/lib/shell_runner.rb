@@ -10,6 +10,7 @@ class ShellRunner
 
   DEFAULT_PROMPT = " -> "
   UNKNOWN_COMMAND = "Unknown command".freeze
+  QUIT_HINT = "Use 'quit' to leave the shell.".freeze
   
   #
   # Initialize the shell runner
@@ -294,15 +295,47 @@ class ShellRunner
   def repl
     setup_completion
 
-    while ( ! @context.done && (line = Readline.readline(prompt, true)) )
+    until @context.done
+      line = read_line
+      next if line == :interrupted
+      break unless line
+
       tokens = line.strip.split(" ")
       if tokens.empty?
         handle_empty_command
         next
       end
 
-      run_tokens( tokens )
+      # Ctrl-C stops the command and comes back to this prompt.
+      @engine.run_interruptible { run_tokens( tokens ) }
     end
+  end
+
+  #
+  # Read a line at the shell's prompt: nil at the end of input, or
+  # :interrupted if Ctrl-C dropped the line (with the hint, if nothing
+  # had been typed).
+  #
+  def read_line
+    return Readline.readline( prompt, true )
+  rescue Interrupt
+    @engine.interrupted_at_prompt( line_typed, quit_hint )
+    return :interrupted
+  end
+
+  #
+  # What had been typed when Ctrl-C was pressed.
+  #
+  def line_typed
+    return Readline.respond_to?( :line_buffer ) ? Readline.line_buffer.to_s : ''
+  end
+
+  #
+  # How to leave the shell, for the Ctrl-C hint: its quit command, if it
+  # has one.
+  #
+  def quit_hint
+    return @obj.include_quit? ? QUIT_HINT : nil
   end
 
 end
