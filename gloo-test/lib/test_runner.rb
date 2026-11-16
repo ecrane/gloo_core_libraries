@@ -30,6 +30,7 @@ class TestRunner
     run_for_files
     @results.end_timer
 
+    @results.show_skipped
     @results.show_failures
     @results.show_results
     @engine.log.debug "TestRunner is finished"
@@ -63,15 +64,17 @@ class TestRunner
 
   #
   # Run tests for a single file.
-  # Once done, reset the engine's state.
+  # Once done, reset the session: an empty heap, and every library or
+  # extension the file loaded unloaded again (except pinned ones, such
+  # as gloo-test itself), so the next file starts with only what it
+  # loads, whatever order the files run in.
   #
   def run_one_file( file )
     # Run all tests in the file
     # Add the results to the overall results
     file.run_tests( @results )
 
-    # Reset the engine's state
-    @engine.reset_state
+    @engine.reset_session
   end
 end
 

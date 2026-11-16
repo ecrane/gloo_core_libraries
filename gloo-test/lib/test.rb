@@ -8,6 +8,7 @@ class Test < Gloo::Core::Obj
   ON_TEST_EVENT = 'on_test'.freeze
   EXPECT_ERRORS = 'expect_errors'.freeze
   EXPECT_FAIL = 'expect_fail'.freeze
+  SKIP = 'skip'.freeze
 
 
   #
@@ -47,6 +48,14 @@ class Test < Gloo::Core::Obj
   #
   def expect_fail?
     return flag_set?( EXPECT_FAIL )
+  end
+
+  #
+  # Is the test set aside, not to be run?
+  # Set with an optional skip [bool] child.
+  #
+  def skip?
+    return flag_set?( SKIP )
   end
 
   #
@@ -95,6 +104,13 @@ class Test < Gloo::Core::Obj
   #
   def run_test
     result = Result.new( @engine, self )
+    if skip?
+      # Not run: counted and listed as skipped instead.
+      result.skipped = true
+      result.show_result_symbol
+      return result
+    end
+
     errors_before = @engine.log.error_count
     warnings_before = @engine.log.warning_count
 
@@ -139,7 +155,8 @@ class Test < Gloo::Core::Obj
         'description (string) — A textual description of the test and desired outcome, used in output if there is an error.',
         'on_test (script) — The script to run when the test is executed. Note that the normal way to run tests is with gloo --test.',
         'expect_errors (bool) — Optional. Set to true for a test that triggers errors or warnings on purpose (eg. to check on_error); they are left out of the summary of what was logged during the run.',
-        'expect_fail (bool) — Optional. Set to true for a test that is meant to fail: it passes if at least one assertion fails, and fails if none does. It can\'t tell which assertion failed, or why, so keep such a test to the one thing it checks.'
+        'expect_fail (bool) — Optional. Set to true for a test that is meant to fail: it passes if at least one assertion fails, and fails if none does. It can\'t tell which assertion failed, or why, so keep such a test to the one thing it checks.',
+        'skip (bool) — Optional. Set to true to set the test aside: its on_test isn\'t run, it\'s shown as s, and it\'s counted and listed as skipped after the run (a run with skipped tests and no failures still passes). Give the reason in a comment on the line above; text after the : is the value, so a comment there makes the flag not true.'
       ],
       :examples => <<~EXAMPLES.strip
         #

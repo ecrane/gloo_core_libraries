@@ -1,0 +1,14 @@
+#
+# Test-file isolation, part two: this file doesn't load md, so it
+# mustn't see md loaded by an earlier file (isolation_loads_md, or any
+# other). The runner resets the session between test files.
+# Needs gloo-test 1.5 or later.
+#
+
+tests.isolation_no_md [can] :
+
+  sees_no_library_from_another_file [test] :
+    description [string] : A library loaded by an earlier test file is gone.
+    on_test [script] :
+      exists? object markdown
+      refute "expected no markdown loaded by another test file"

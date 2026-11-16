@@ -219,4 +219,49 @@ class ResultsTest < BaseEngineTest
     assert_equal '2 errors and 1 warning', results.count_phrase( 2, 1 )
   end
 
+  def build_skipped_result
+    result = Result.new( @engine, create_test_obj )
+    result.skipped = true
+    return result
+  end
+
+  def test_add_result_counts_a_skip_as_neither_pass_nor_fail
+    results = Results.new( @engine )
+    results.add_result build_skipped_result
+    assert_equal 1, results.skip_count
+    assert_equal 0, results.pass_count
+    assert_equal 0, results.fail_count
+  end
+
+  def test_a_run_with_only_skips_and_passes_passes
+    results = Results.new( @engine )
+    @engine.log.reset_counts
+    results.add_result build_result( passed: true )
+    results.add_result build_skipped_result
+    assert results.passed?
+  end
+
+  def test_summary_shows_skipped_only_when_there_are_some
+    results = Results.new( @engine )
+    results.add_result build_result( passed: true )
+    refute_includes results.get_result_summary, 'Skipped'
+
+    results.add_result build_skipped_result
+    assert_includes results.get_result_summary, 'Skipped: 1'
+  end
+
+  def test_show_skipped_lists_each_skipped_test
+    results = Results.new( @engine )
+    results.add_result build_skipped_result
+    out, = capture_io { results.show_skipped }
+    assert_includes out, 'Skipped (1)'
+    assert_includes out, 't -> '
+  end
+
+  def test_show_skipped_shows_nothing_without_skips
+    results = Results.new( @engine )
+    out, = capture_io { results.show_skipped }
+    assert_equal '', out
+  end
+
 end

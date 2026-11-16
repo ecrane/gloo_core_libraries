@@ -1,0 +1,18 @@
+load lib md
+
+#
+# Test-file isolation, part one: this file loads md for itself.
+# Its partner, isolation_no_md.test.gloo, checks that md is gone
+# again in the next file, whatever order the two run in: the runner
+# resets the session (Engine#reset_session) between test files.
+# Needs gloo-test 1.5 or later; with an older installed gloo-test,
+# the partner fails whenever it runs after this file.
+#
+
+tests.isolation_loads_md [can] :
+
+  loads_its_own_library [test] :
+    description [string] : A test file loads the libraries it uses.
+    on_test [script] :
+      exists? object markdown
+      assert "expected markdown after this file's load lib md"

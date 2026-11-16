@@ -7,8 +7,8 @@ class Result
   EXPECTED_FAIL_MSG = 'expected this test to fail, but no assertion failed'.freeze
 
   attr_accessor :passed, :assert_count, :refute_count,
-    :error_count, :warning_count, :expect_errors
-  attr_reader :pn
+    :error_count, :warning_count, :expect_errors, :skipped
+  attr_reader :pn, :test_desc
 
   #
   # Set up the result for the given test.
@@ -29,6 +29,8 @@ class Result
     @expect_errors = false
 
     @passed = true
+    # Set aside with skip: not run, and neither passed nor failed.
+    @skipped = false
     @failure_msg = ''
   end
 
@@ -58,7 +60,7 @@ class Result
   # Show the test result symbol.
   #
   def show_result_symbol
-    print @passed ? '.' : 'x'
+    print @skipped ? 's' : ( @passed ? '.' : 'x' )
   end
 
   #

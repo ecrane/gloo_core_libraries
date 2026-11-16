@@ -95,4 +95,8 @@ class ResultTest < BaseEngineTest
     assert_includes msg, Result::EXPECTED_FAIL_MSG
   end
 
+  def test_starts_not_skipped
+    refute Result.new( @engine, create_test_obj ).skipped
+  end
+
 end

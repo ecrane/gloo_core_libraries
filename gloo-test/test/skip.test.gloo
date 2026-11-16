@@ -1,0 +1,17 @@
+#
+# Skipping a test: this one is set aside with skip, so its on_test
+# never runs, and every run lists it as skipped (that's expected).
+# If skip ever stopped working, it would run and fail.
+# Needs gloo-test 1.5 or later; with an older installed gloo-test it
+# runs, and fails.
+#
+
+tests.skip [can] :
+
+  # Skipped on purpose, to show that skip works.
+  is_skipped [test] :
+    description [string] : A skipped test isn't run (this one fails if it is).
+    skip [bool] : true
+    on_test [script] :
+      eval false
+      assert "expected skip [bool] : true to keep this test from running"

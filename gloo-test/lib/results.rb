@@ -5,7 +5,7 @@
 class Results 
 
   attr_accessor :file_count, :test_count, 
-    :pass_count, :fail_count, :assert_count
+    :pass_count, :fail_count, :assert_count, :skip_count
   
   #
   # Set up the results collection.
@@ -15,10 +15,12 @@ class Results
 
     @all_results = []
     @failures = []
+    @skipped = []
 
     @file_count = 0
     @pass_count = 0
     @fail_count = 0
+    @skip_count = 0
     @assert_count = 0
     
     @engine.log.debug "Results initialized"
@@ -59,6 +61,12 @@ class Results
   #
   def add_result( result )
     @all_results << result
+    if result.skipped
+      @skipped << result
+      @skip_count += 1
+      return
+    end
+
     @failures << result unless result.passed
 
     @pass_count += 1 if result.passed
@@ -113,6 +121,20 @@ class Results
   end
 
   #
+  # Show the skipped tests, so they aren't forgotten: each one's path
+  # and description. The reason is in a comment above it in the file.
+  #
+  def show_skipped
+    return unless @skip_count.positive?
+
+    theme = @engine.theme
+    puts
+    puts theme.warn( "*** Skipped (#{@skip_count}) ***" )
+    puts
+    @skipped.each { |r| puts "#{r.pn} -> #{r.test_desc}" }
+  end
+
+  #
   # Get a textual summary of the results.
   #
   def get_result_summary
@@ -123,6 +145,8 @@ class Results
     else
       str += theme.emphasis( " Failed: #{@fail_count} " )
     end
+    # Only when there are any, so a run without them reads as before.
+    str += theme.warn( "• Skipped: #{@skip_count} " ) if @skip_count.positive?
     str += theme.accent( "\n  Assertions: #{@assert_count} • Files: #{@file_count}" )
     return str
   end

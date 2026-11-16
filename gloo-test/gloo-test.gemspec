@@ -36,9 +36,10 @@ Gem::Specification.new do |spec|
 
   #
   # Uses gloo 7.0's log counts (error_count, warning_count, reset_counts)
-  # and NotFound wording
+  # and NotFound wording, and gloo 7.3's Engine#reset_session between
+  # test files
   #
-  spec.add_dependency 'gloo', '>= 7.0'
+  spec.add_dependency 'gloo', '>= 7.3'
 
   #
   # Development Dependencies

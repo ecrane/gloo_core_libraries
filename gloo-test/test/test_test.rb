@@ -186,4 +186,40 @@ class TestTest < BaseEngineTest
     refute result.passed
   end
 
+  def test_skip_is_false_without_the_child
+    refute create_test.skip?
+  end
+
+  def test_skip_reads_the_child
+    t = create_test
+    @engine.factory.create_bool( 'skip', true, t )
+    assert t.skip?
+  end
+
+  def test_skip_false_is_not_skipped
+    t = create_test
+    @engine.factory.create_bool( 'skip', false, t )
+    refute t.skip?
+  end
+
+  #
+  # A skipped test's on_test doesn't run: here it would fail, and log.
+  #
+  def test_run_test_does_not_run_a_skipped_test
+    t = create_test
+    @engine.factory.create_bool( 'skip', true, t )
+    o = t.find_child( 'on_test' )
+    o.add_line( 'eval false' )
+    o.add_line( 'assert' )
+    o.add_line( 'load no_such_file_xyz' )
+
+    result = nil
+    out, = capture_io { result = t.run_test }
+    assert result.skipped
+    assert result.passed
+    assert_equal 0, result.assert_count
+    assert_equal 0, result.error_count
+    assert_equal 's', out
+  end
+
 end
